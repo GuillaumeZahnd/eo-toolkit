@@ -11,11 +11,13 @@ def fetch_stac(
     size_m: float,
     start: str,
     end: str,
-    max_cloud: float,
     bands: list[str],
     stac_url: str,
+    collection: str = "sentinel-2-l2a",
+    query: dict[str, Any] | None = None,
+    scale_factor: float = 10_000.0,
 ) -> tuple[np.ndarray[Any, np.dtype[np.float32]], str]:
-    """Fetch a small Sentinel-2 L2A window around a point from a STAC catalog.
+    """Fetch from a STAC catalog.
 
     Parameters
     ----------
@@ -29,8 +31,6 @@ def fetch_stac(
         Start date for the STAC search in 'YYYY-MM-DD' format.
     end : str
         End date for the STAC search in 'YYYY-MM-DD' format.
-    max_cloud : float
-        Maximum allowable cloud cover percentage.
     bands : list[str]
         List of band asset keys to fetch.
     stac_url : str
@@ -48,17 +48,25 @@ def fetch_stac(
     dlon = size_m / (111_320 * math.cos(math.radians(lat))) / 2
     bbox = (lon - dlon, lat - dlat, lon + dlon, lat + dlat)
 
-    # Search the catalogue (metadata only, nothing heavy yet)
-    items = Client.open(stac_url).search(
-        collections=["sentinel-2-l2a"],
-        bbox=bbox,
-        datetime=f"{start}/{end}",
-        query={"eo:cloud_cover": {"lt": max_cloud}}).item_collection()
+    # Search with dynamic collection and query parameters (metadata only, nothing heavy yet)
+    search_args = {
+        "collections": [collection],
+        "bbox": bbox,
+        "datetime": f"{start}/{end}",
+    }
+    if query:
+        search_args["query"] = query
+
+    items = Client.open(stac_url).search(**search_args).item_collection()
 
     if not items:
-        raise SystemExit("No scene found: widen the dates or raise max_cloud.")
+        raise SystemExit(f"No scene found for collection {collection}.")
 
-    best = min(items, key=lambda it: it.properties["eo:cloud_cover"])
+    # Sort or select best item (if optical, sort by cloud cover; if radar, pick most recent or specific orbit)
+    if "cloud_cover" in str(query):
+        best = min(items, key=lambda it: it.properties.get("eo:cloud_cover", 0))
+    else:
+        best = max(items, key=lambda it: it.datetime or "")
 
     # Read only the specified window, all bands resampled to a 10 m grid (UTM zone)
     odc.stac.configure_rio(cloud_defaults=True, aws={"aws_unsigned": True})
@@ -66,9 +74,8 @@ def fetch_stac(
     ds = odc.stac.load([best], bands=bands, bbox=bbox, crs=utm, resolution=10).compute()
 
     raw = np.stack([ds[b].values[0] for b in bands]).astype(np.float32)
-    reflectance = np.clip(raw / 10_000.0, 0.0, 1.5).astype(np.float32)
+    processed = np.nan_to_num(raw / scale_factor)
 
-    # Fallback/safeguard for datetime attribute
     item_date = best.datetime.date() if best.datetime else best.properties.get("datetime", "unknown")
 
-    return reflectance, str(item_date)
+    return processed, str(item_date)
