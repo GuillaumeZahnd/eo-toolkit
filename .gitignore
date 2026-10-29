@@ -1,0 +1,6 @@
+__pycache__
+.env
+remote-sensing-513012-eb497b9789ad.json
+*.swp
+.ipynb_checkpoints/
+
