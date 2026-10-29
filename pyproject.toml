@@ -1,0 +1,17 @@
+[project]
+name = "remote-sensing"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "jupyter>=1.1.1",
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.4",
+    "odc-stac>=0.5.3",
+    "planetary-computer>=1.0.0",
+    "pyproj>=3.8.0",
+    "pystac-client>=0.9.1",
+    "python-dotenv>=1.2.4",
+    "rasterio>=1.5.2",
+    "rioxarray>=0.23.0",
+    "torch>=2.15.0",
+]
