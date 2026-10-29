@@ -1,11 +1,12 @@
 import numpy as np
 
 
-def softclip(x, lo_pct=2, hi_pct=98, smoothness=3.0):
+def softclip(x, lo=None, hi=None, lo_pct=2, hi_pct=98, smoothness=3.0):
     """Soft clip values using a robust percentile anchor
     and a smooth sigmoidal transition to preserve highlight/shadow detail.
     """
-    lo, hi = np.percentile(x, (lo_pct, hi_pct))
+    if lo is None or hi is None:
+        lo, hi = np.percentile(x, (lo_pct, hi_pct))
 
     # Avoid division by zero
     span = (hi - lo) if (hi - lo) > 1e-9 else 1e-9
