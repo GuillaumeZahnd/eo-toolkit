@@ -45,9 +45,13 @@ Results are downloaded in the `gcp_outputs` folder.
 
 ## Check for leftovers after a run 
 
-Both should return empty.
+All should return empty.
 
 ```sh
 gcloud compute instances list
 gcloud compute disks list
+gcloud compute snapshots list
+gcloud compute images list --no-standard-images
+gcloud compute addresses list
+gcloud storage buckets list
 ```
