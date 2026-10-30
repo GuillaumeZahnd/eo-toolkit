@@ -18,8 +18,13 @@ or
 uv add --editable /path/to/your/anysat
 ```
 
-3. Preprocess the EFDA into patches
 
-`uv run src/preprocess.py`
+3. Prefetch EFDA rasters
+
+`uv run src/prefetch_region.py`
+
+4. Preprocess EFDA into patches
+
+`uv run src/preprocess_efda.py`
 
 
