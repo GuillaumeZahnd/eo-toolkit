@@ -1,6 +1,6 @@
 import math
 import warnings
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from typing import Any, Literal
 
@@ -51,6 +51,15 @@ def _item_date(item: Item) -> str:
     return str(item.properties.get("datetime", "unknown"))[:10]
 
 
+def _modifier(stac_url: str, modifier: Callable[[Any], Any] | None) -> Callable[[Any], Any] | None:
+    """Explicit modifier wins; Planetary Computer URLs get automatic asset signing."""
+    if modifier is not None or "planetarycomputer.microsoft.com" not in stac_url:
+        return modifier
+    import planetary_computer
+
+    return planetary_computer.sign_inplace
+
+
 def _search(
     stac_url: str,
     collection: str,
@@ -58,8 +67,9 @@ def _search(
     start: str,
     end: str,
     query: dict[str, Any] | None,
+    modifier: Callable[[Any], Any] | None = None,
 ) -> list[Item]:
-    client = Client.open(stac_url)
+    client = Client.open(stac_url, modifier=_modifier(stac_url, modifier))
     items = list(
         client.search(
             collections=[collection], bbox=bbox, datetime=f"{start}/{end}", query=query or None
@@ -111,6 +121,7 @@ def fetch_s2(
     scale_factor: float = 10_000.0,
     resolution: float = 10.0,
     resampling: str = "nearest",
+    modifier: Callable[[Any], Any] | None = None,
 ) -> tuple[npt.NDArray[np.float32], str]:
     """Fetch the least cloudy Sentinel-2 scene as a windowed reflectance array.
 
@@ -140,6 +151,8 @@ def fetch_s2(
         Output pixel size in metres. Default ``10``.
     resampling : str, optional
         Resampling for bands with a different native grid. Default ``"nearest"``.
+    modifier : Callable | None, optional
+        Item modifier that signs assets. Applied automatically for Planetary Computer.
 
     Returns
     -------
@@ -159,7 +172,7 @@ def fetch_s2(
     if max_cloud is not None:
         q.setdefault("eo:cloud_cover", {"lt": max_cloud})
 
-    items = _search(stac_url, collection, bbox, start, end, q)
+    items = _search(stac_url, collection, bbox, start, end, q, modifier)
 
     # Lowest cloud cover; ties -> most recent. Missing cloud cover counts as 100 %.
     best = min(
@@ -196,6 +209,7 @@ def fetch_s1(
     to_db: bool = False,
     resolution: float = 10.0,
     resampling: str = "nearest",
+    modifier: Callable[[Any], Any] | None = None,
 ) -> tuple[npt.NDArray[np.float32], str]:
     """Fetch Sentinel-1 backscatter for a window around a point.
 
@@ -233,6 +247,8 @@ def fetch_s1(
         Output pixel size in metres. Default ``10``.
     resampling : str, optional
         Resampling method. Default ``"nearest"``.
+    modifier : Callable | None, optional
+        Item modifier that signs assets. Applied automatically for Planetary Computer.
 
     Returns
     -------
@@ -261,7 +277,7 @@ def fetch_s1(
         q.setdefault("sat:relative_orbit", {"eq": relative_orbit})
 
     items = sorted(
-        _search(stac_url, collection, bbox, start, end, q), key=_item_time, reverse=True
+        _search(stac_url, collection, bbox, start, end, q, modifier), key=_item_time, reverse=True
     )
     if reducer == "latest":
         newest = _item_date(items[0])
