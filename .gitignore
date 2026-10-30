@@ -4,3 +4,8 @@ remote-sensing-513012-eb497b9789ad.json
 *.swp
 .ipynb_checkpoints/
 gcp_outputs
+
+data
+datasets
+lightning_logs
+outputs

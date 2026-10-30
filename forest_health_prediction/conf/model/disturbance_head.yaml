@@ -1,0 +1,6 @@
+_target_: src.models.disturbance_module.DisturbanceLitModule
+learning_rate: 1e-3
+weight_decay: 1e-4
+embedding_dim: 768  # e.g., AnySat output dimension
+hidden_dim: 128
+linear_probe: true   # Start with linear probe, switch to false for fine-tuning

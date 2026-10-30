@@ -1,0 +1,14 @@
+raw_dir: "datasets"
+output_dir: "data/processed_patches"
+patch_size: 64            # 64 px * 10m = 640m patch
+years: [2021, 2022, 2023, 2024]
+
+# Focused sub-region: Vosges Mountains (High bark beetle / disturbance activity)
+bbox_latlon:
+  min_lon: 6.5
+  min_lat: 48.1
+  max_lon: 7.0
+  max_lat: 48.5
+
+# Max patches cap for local debugging/training (set to null or a large number for full region)
+max_patches: 800
