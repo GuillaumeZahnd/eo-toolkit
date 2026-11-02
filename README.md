@@ -14,6 +14,7 @@
 - `geemap` & `ipyleaflet`: Interactive mapping tools and visualization widgets for notebooks.
 - `folium`: Visualize data on an interactive leaflet map. 
 - `geopandas`: Open source project to facilitate working with geospatial data.
+- `geoparquet`: Facilitate fast input/output of GIS data in the open source Parquet file format.
 
 #### Machine learning & deep learning
 
@@ -31,4 +32,12 @@
 - `pandas`: Tabular data structures and feature dataset handling (e.g., EFDA logs).
 - `matplotlib`: Plotting and visualization.
 - `ipywidgets`: Interactive HTML control elements for Jupyter notebooks.
+
+### Acronyms
+
+- **CRS:** Coordinate Reference System
+- **GIS:** Geographic Information System
+- **NDMI:** Normalized Difference Moisture Index, describes the crop’s water stress level (`NDMI := NIR-SWIR)/(NIR+SWIR)`)
+- **NDRE:** Normalized Difference Red Edge Index, describes the amount of chlorophyll in a plant (`NDRE = (NIR-RE)/(NIR+RE)`)
+- **NDVI:** Normalized Difference Vegetation Index, describes the vigour level of the crop (`NDVI := (NIR-Red)/(NIR+Red)`)
 

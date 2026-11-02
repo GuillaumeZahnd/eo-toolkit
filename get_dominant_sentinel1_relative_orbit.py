@@ -1,4 +1,4 @@
-from fetch_stac import _search, PLANETARY_COMPUTER_URL, _bbox_around, NoSceneFoundError
+from stac import search_stac, PLANETARY_COMPUTER_URL, bbox_around, NoSceneFoundError
 
 
 def get_dominant_sentinel1_relative_orbit(
@@ -36,7 +36,7 @@ def get_dominant_sentinel1_relative_orbit(
     tuple[int, str]
         A tuple containing (relative_orbit_number, orbit_source_tier).
     """
-    bbox = _bbox_around(lon, lat, size_m)
+    bbox = bbox_around(lon, lat, size_m)
     base_query = {"sat:orbit_state": {"eq": orbit_state}}
 
     # Define quality tiers to attempt in descending order
@@ -48,7 +48,7 @@ def get_dominant_sentinel1_relative_orbit(
             q["s1:orbit_source"] = {"eq": tier}
 
         try:
-            items = _search(stac_url, "sentinel-1-rtc", bbox, start, end, q)
+            items = search_stac(stac_url, "sentinel-1-rtc", bbox, start, end, q)
 
             orbits = [
                 i.properties.get("sat:relative_orbit")

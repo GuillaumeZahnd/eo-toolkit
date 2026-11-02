@@ -1089,6 +1089,15 @@ wheels = [
 ]
 
 [[package]]
+name = "geoparquet"
+version = "0.0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/89/61/6f4cd7d0dc97e08006a958a1db2889416c85a08afd0c9d0cafbb01083465/geoparquet-0.0.3.tar.gz", hash = "sha256:2968c0cd65fe5781abc057252e71bb364b5d18ecbf26c32d753a98df01196a65", size = 3166, upload-time = "2019-10-11T23:51:54.143Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/c3/3ffe3ddc783d3173fe87dbb213bc3b562dd31667662a5c12af100ac77524/geoparquet-0.0.3-py3-none-any.whl", hash = "sha256:6aaee13d802d02d73c14a981bc73482c0074a5af671557971187890070fc7da9", size = 4294, upload-time = "2019-10-11T23:51:52.438Z" },
+]
+
+[[package]]
 name = "google-api-core"
 version = "2.43.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3838,6 +3847,7 @@ dependencies = [
     { name = "folium" },
     { name = "geemap" },
     { name = "geopandas" },
+    { name = "geoparquet" },
     { name = "ipyleaflet" },
     { name = "ipywidgets" },
     { name = "jupyter" },
@@ -3861,6 +3871,7 @@ requires-dist = [
     { name = "folium", specifier = ">=0.20.0" },
     { name = "geemap", specifier = ">=0.38.9" },
     { name = "geopandas", specifier = ">=1.2.0" },
+    { name = "geoparquet", specifier = ">=0.0.3" },
     { name = "ipyleaflet", specifier = ">=0.20.0" },
     { name = "ipywidgets", specifier = ">=8.1.9" },
     { name = "jupyter", specifier = ">=1.1.1" },
