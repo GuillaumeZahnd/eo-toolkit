@@ -156,11 +156,11 @@ def select_closest_manifest_item(manifest: list[dict], target_date: str) -> dict
 
 
 def filter_manifest_by_best_orbit(
-    manifest: list[dict]
+    manifest: list[dict],
+    required_bands: tuple[str, ...] = ("vv", "vh"),
 ) -> tuple[list[dict], int | None, list[tuple[int, int]]]:
-    """Analyzes a Sentinel-1 manifest, returns frequency counts of all relative
-    orbits for auditing, determines the dominant orbit by frequency, and filters
-    the manifest to retain only items from that track.
+    """Analyzes the manifest, filters out items missing the required polarization bands,
+    returns orbit counts for auditing, determines the dominant orbit, and filters the manifest.
 
     Parameters
     ----------
@@ -187,19 +187,39 @@ def filter_manifest_by_best_orbit(
     if not manifest:
         return [], None, []
 
-    orbits = [entry["relative_orbit"] for entry in manifest if entry.get("relative_orbit") is not None]
+    # Filter out manifest items that do not contain all required band assets
+    valid_manifest = []
+    for entry in manifest:
+        item_obj = entry.get("_item_obj")
+        if item_obj and hasattr(item_obj, "assets"):
+            asset_keys = item_obj.assets.keys()
+            if all(b in asset_keys for b in required_bands):
+                valid_manifest.append(entry)
+            else:
+                print(f"[FILTER] Dropping {getattr(item_obj, 'id', 'unknown')} due to missing bands: {list(asset_keys)}")
 
+    if not valid_manifest:
+        return [], None, []
+
+    # Extract orbits from the pre-filtered valid items
+    orbits = [
+        entry["relative_orbit"]
+        for entry in valid_manifest
+        if entry.get("relative_orbit") is not None
+    ]
     if not orbits:
-        return manifest, None, []
+        return valid_manifest, None, []
 
-    # Count frequencies and sort descending
     counts = Counter(orbits)
     sorted_counts = counts.most_common()  # e.g., [(66, 97), (139, 3)]
 
-    # The 1st item in most_common is the most frequent (dominant) orbit
+    # The 1st item in most_common is the dominant orbit
     orbit_number = sorted_counts[0][0]
 
-    # Filter manifest to keep only the entries matching the dominant orbit
-    filtered_manifest = [entry for entry in manifest if entry.get("relative_orbit") == orbit_number]
+    # Filter valid manifest to keep only the entries matching the dominant orbit
+    filtered_manifest = [
+        entry for entry in valid_manifest
+        if entry.get("relative_orbit") == orbit_number
+    ]
 
     return filtered_manifest, orbit_number, sorted_counts
