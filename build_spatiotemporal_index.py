@@ -12,8 +12,7 @@ def build_spatiotemporal_index(
     resolution: int = 30,
     crs: str = "EPSG:32631",
 ) -> gpd.GeoDataFrame:
-    """Generates a deterministic GeoDataFrame index mapping patch IDs
-    to spatial bounding boxes and temporal bins.
+    """Generate a deterministic GeoDataFrame index mapping patch IDs to spatial bounding boxes and temporal bins.
 
     Parameters
     ----------
