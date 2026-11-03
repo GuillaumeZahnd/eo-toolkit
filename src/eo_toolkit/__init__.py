@@ -25,6 +25,7 @@ from .load_cached_sentinel1_as_numpy_tensor import (
 
 from .statistics import (
     correlated_seasonal_mann_kendall,
+    compute_residuals,
 )
 
 from .utils import (
@@ -52,6 +53,7 @@ __all__ = [
     "load_cached_sentinel1_as_numpy_tensor"
     # statistics
     "correlated_seasonal_mann_kendall"
+    "compute_residuals"
     # utils
     "compute_monthly_median"
     "compute_patch_series"
