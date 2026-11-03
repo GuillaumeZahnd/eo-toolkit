@@ -14,7 +14,7 @@ from eo_toolkit import (
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def download_sentinel1_patches(cfg: DictConfig) -> None:
 
-    YEARS = range(2014, 2026)  # Sentinel-1A was launched on April 3, 2014.
+    YEARS = range(2014, 2027)  # Sentinel-1A was launched on April 3, 2014.
     REQUIRED_BANDS = ("vv", "vh")
     LOG_NAME = f"sentinel1_orbitals_{YEARS[0]}_{YEARS[-1]}_{cfg.region.longitude}_{cfg.region.latitude}_{cfg.region.size_m}.txt"
     DATA_COLLECTION_NAME = f"sentinel1_lat_{cfg.region.latitude}_lon_{cfg.region.longitude}_size_{cfg.region.size_m}"

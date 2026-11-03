@@ -15,6 +15,44 @@ PLANETARY_COMPUTER_URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
 Bbox = tuple[float, float, float, float]
 _EPOCH = datetime.min.replace(tzinfo=timezone.utc)
 
+S2_BANDS = [
+    "coastal",    # B1: Coastal Aerosol, 60 m/px, 443 nm, Atmospheric correction
+    "blue",       # B2: Blue, 10 m/px, 490 nm, Forest type mapping
+    "green",      # B3: Green, 10 m/px, 560 nm, Water body analysis
+    "red",        # B4: Red, 10 m/px, 665 nm, Vegetation discrimination
+    "rededge1",   # B5: Red Edge 1, 20 m/px, 705 nm, Vegetation stress detection
+    "rededge2",   # B6: Red Edge 2, 20 m/px, 740 nm, Leaf area index monitoring
+    "rededge3",   # B7: Red Edge 3, 20 m/px, 783 nm, Biomass estimation
+    "nir",        # B8: NIR, 10 m/px, 842 nm, Shorelines and biomass
+    "nir08",      # B8A: Narrow NIR, 20 m/px, 865 nm, Vegetation classification
+    "nir09",      # B9: Water Vapour, 60 m/px, 945 nm, Atmospheric water vapour
+    "swir16",     # B11: SWIR 1, 20 m/px, 1610 nm, Soil and plant moisture
+    "swir22",     # B12: SWIR 2, 20 m/px, 2190 nm, Geology and burn scars
+]
+
+S2_GROUPS = {
+    "Visible 1":  ["true_colour", "coastal"],
+    "Visible 2":  ["blue", "green", "red"],
+    "Red edge": ["rededge1", "rededge2", "rededge3"],
+    "NIR":      ["nir", "nir08", "nir09"],
+    "SWIR":     ["swir16", "swir22"],
+}
+
+S2_LABELS = {
+    "true_colour": "True Colour: RGB Composite\n(10 m/px)\nNatural visualization",
+    "coastal": "B1: Coastal Aerosol\n(60 m/px, 443 nm)\nAtmospheric correction",
+    "blue": "B2: Blue\n(10 m/px, 490 nm)\nForest type mapping",
+    "green": "B3: Green\n(10 m/px, 560 nm)\nWater body analysis",
+    "red": "B4: Red\n(10 m/px, 665 nm)\nVegetation discrimination",
+    "rededge1": "B5: Red Edge 1\n(20 m/px, 705 nm)\nVegetation stress detection",
+    "rededge2": "B6: Red Edge 2\n(20 m/px, 740 nm)\nLeaf area index monitoring",
+    "rededge3": "B7: Red Edge 3\n(20 m/px, 783 nm)\nBiomass estimation",
+    "nir": "B8: NIR\n(10 m/px, 842 nm)\nShorelines and biomass",
+    "nir08": "B8A: Narrow NIR\n(20 m/px, 865 nm)\nVegetation classification",
+    "nir09": "B9: Water Vapour\n(60 m/px, 945 nm)\nAtmospheric water vapour",
+    "swir16": "B11: SWIR 1\n(20 m/px, 1610 nm)\nSoil and plant moisture",
+    "swir22": "B12: SWIR 2\n(20 m/px, 2190 nm)\nGeology and burn scars",
+}
 
 class NoSceneFoundError(LookupError):
     """Raised when a STAC search returns no matching scene."""
