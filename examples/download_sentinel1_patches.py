@@ -1,3 +1,5 @@
+import hydra
+from omegaconf import DictConfig
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -9,28 +11,24 @@ from eo_toolkit import (
     log_orbit_audit
 )    
 
+@hydra.main(version_base=None, config_path="config", config_name="config")
+def download_sentinel1_patches(cfg: DictConfig) -> None:
 
-if __name__ == "__main__":
-
-    LON, LAT, SIZE_M = 7.85, 48.83, 3000
+    cfg.longitude, cfg.latitude, cfg.size_m = 7.85, 48.83, 3000
     YEARS = range(2014, 2026)  # Sentinel-1A was launched on April 3, 2014.
     REQUIRED_BANDS = ("vv", "vh")
-    LOG_NAME = f"sentinel1_orbitals_{YEARS[0]}_{YEARS[-1]}_{LON}_{LAT}_{SIZE_M}.txt"
-    DATA_COLLECTION_NAME = f"sentinel1_lat_{LAT}_lon_{LON}_size_{SIZE_M}"
-    
-    PATH_TO_LOGS = Path("logs")
-    PATH_TO_DATA =  Path("datas")
-    
+    LOG_NAME = f"sentinel1_orbitals_{YEARS[0]}_{YEARS[-1]}_{cfg.longitude}_{cfg.latitude}_{cfg.size_m}.txt"
+    DATA_COLLECTION_NAME = f"sentinel1_lat_{cfg.latitude}_lon_{cfg.longitude}_size_{cfg.size_m}"
        
-    log_file_path = PATH_TO_LOGS / LOG_NAME
+    log_file_path = cfg.cfg.path_to_logs / LOG_NAME
     if log_file_path.exists():
         log_file_path.unlink()
 
-    patch_dir = PATH_TO_DATA / DATA_COLLECTION_NAME
+    patch_dir = cfg.cfg.path_to_data / DATA_COLLECTION_NAME
     patch_dir.mkdir(parents=True, exist_ok=True)
 
     # Fetch the complet multi-year manifest
-    raw_manifest = get_s1_manifest(LON, LAT, SIZE_M, f"{YEARS[0]}-01-01", f"{YEARS[-1]}-12-31")
+    raw_manifest = get_s1_manifest(cfg.longitude, cfg.latitude, cfg.size_m, f"{YEARS[0]}-01-01", f"{YEARS[-1]}-12-31")
 
     # Process year by year
     for year in YEARS:
@@ -57,7 +55,7 @@ if __name__ == "__main__":
             if file_path.exists():
                 continue  # Skip downloading if already cached locally
                 
-            arr, exact_date = fetch_s1_image(entry["_item_obj"], LON, LAT, SIZE_M)
+            arr, exact_date = fetch_s1_image(entry["_item_obj"], cfg.longitude, cfg.latitude, cfg.size_m)
             
             np.savez_compressed(
                 file_path,
@@ -67,3 +65,8 @@ if __name__ == "__main__":
             )
 
     print(f"Download complete.\nLogs saved to {log_file_path}.\nRaster patches saved to {patch_dir}.")
+    
+    
+if __name__ == "__main__":
+    download_sentinel1_patches()
+
