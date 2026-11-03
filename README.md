@@ -33,6 +33,10 @@
 - `matplotlib`: Plotting and visualization.
 - `ipywidgets`: Interactive HTML control elements for Jupyter notebooks.
 
+#### Statistical analysis
+
+- `pymannkendall`: The Mann-Kendall Test is used to determine whether a time series has a monotonic upward or downward trend.
+
 ### Acronyms
 
 - **CRS:** Coordinate Reference System
