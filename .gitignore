@@ -5,3 +5,4 @@ remote-sensing-513012-eb497b9789ad.json
 .ipynb_checkpoints/
 gcp_outputs
 data/
+eo_toolkit.egg-info

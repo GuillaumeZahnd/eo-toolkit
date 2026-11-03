@@ -3,11 +3,19 @@ import pandas as pd
 from typing import Literal
 from odc.geo import AnchorEnum, geom
 from odc.geo.geobox import GeoBox
+from datetime import datetime
 
 
-from stac import (
-    EARTH_SEARCH_URL, PLANETARY_COMPUTER_URL, NoSceneFoundError,
-    bbox_around, utm_epsg, item_time, item_date, search_stac, load_stac_raster
+from .stac import (
+    EARTH_SEARCH_URL,
+    PLANETARY_COMPUTER_URL,
+    NoSceneFoundError,
+    bbox_around,
+    utm_epsg,
+    item_time,
+    item_date,
+    search_stac,
+    load_stac_raster,
 )
 
 
@@ -74,19 +82,6 @@ def fetch_s2_image(
         ndre = np.where(ok, (b8a - b5) / (b8a + b5), np.nan).astype("float32")
     
     return ndre[np.newaxis, :, :], item_date(best)
-
-
-import numpy as np
-import pandas as pd
-from typing import Literal
-from datetime import datetime
-
-from stac import (
-    PLANETARY_COMPUTER_URL, NoSceneFoundError,
-    bbox_around, utm_epsg, item_time, item_date, search_stac, load_stac_raster
-)
-
-CELL = 30  # Working spatial resolution in meters
 
 
 def fetch_s2_ndre_timeseries(

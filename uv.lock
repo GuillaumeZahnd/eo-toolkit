@@ -892,6 +892,57 @@ wheels = [
 ]
 
 [[package]]
+name = "eo-toolkit"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "earthengine-api" },
+    { name = "folium" },
+    { name = "geemap" },
+    { name = "geopandas" },
+    { name = "geoparquet" },
+    { name = "ipyleaflet" },
+    { name = "ipywidgets" },
+    { name = "jupyter" },
+    { name = "jupyterlab" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "odc-stac" },
+    { name = "pandas" },
+    { name = "planetary-computer" },
+    { name = "pyproj" },
+    { name = "pystac-client" },
+    { name = "python-dotenv" },
+    { name = "rasterio" },
+    { name = "rioxarray" },
+    { name = "torch" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "earthengine-api", specifier = ">=1.7.50" },
+    { name = "folium", specifier = ">=0.20.0" },
+    { name = "geemap", specifier = ">=0.38.9" },
+    { name = "geopandas", specifier = ">=1.2.0" },
+    { name = "geoparquet", specifier = ">=0.0.3" },
+    { name = "ipyleaflet", specifier = ">=0.20.0" },
+    { name = "ipywidgets", specifier = ">=8.1.9" },
+    { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "jupyterlab", specifier = ">=4.6.4" },
+    { name = "matplotlib", specifier = ">=3.11.2" },
+    { name = "numpy", specifier = ">=2.5.4" },
+    { name = "odc-stac", specifier = ">=0.5.3" },
+    { name = "pandas", specifier = ">=3.1.0" },
+    { name = "planetary-computer", specifier = ">=1.0.0" },
+    { name = "pyproj", specifier = ">=3.8.0" },
+    { name = "pystac-client", specifier = ">=0.9.1" },
+    { name = "python-dotenv", specifier = ">=1.2.4" },
+    { name = "rasterio", specifier = ">=1.5.2" },
+    { name = "rioxarray", specifier = ">=0.23.0" },
+    { name = "torch", specifier = ">=2.15.0" },
+]
+
+[[package]]
 name = "executing"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3836,57 +3887,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz", hash = "sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8", size = 78036, upload-time = "2025-10-13T15:30:48.871Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/58/ca301544e1fa93ed4f80d724bf5b194f6e4b945841c5bfd555878eea9fcb/referencing-0.37.0-py3-none-any.whl", hash = "sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231", size = 26766, upload-time = "2025-10-13T15:30:47.625Z" },
-]
-
-[[package]]
-name = "remote-sensing"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "earthengine-api" },
-    { name = "folium" },
-    { name = "geemap" },
-    { name = "geopandas" },
-    { name = "geoparquet" },
-    { name = "ipyleaflet" },
-    { name = "ipywidgets" },
-    { name = "jupyter" },
-    { name = "jupyterlab" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "odc-stac" },
-    { name = "pandas" },
-    { name = "planetary-computer" },
-    { name = "pyproj" },
-    { name = "pystac-client" },
-    { name = "python-dotenv" },
-    { name = "rasterio" },
-    { name = "rioxarray" },
-    { name = "torch" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "earthengine-api", specifier = ">=1.7.50" },
-    { name = "folium", specifier = ">=0.20.0" },
-    { name = "geemap", specifier = ">=0.38.9" },
-    { name = "geopandas", specifier = ">=1.2.0" },
-    { name = "geoparquet", specifier = ">=0.0.3" },
-    { name = "ipyleaflet", specifier = ">=0.20.0" },
-    { name = "ipywidgets", specifier = ">=8.1.9" },
-    { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "jupyterlab", specifier = ">=4.6.4" },
-    { name = "matplotlib", specifier = ">=3.11.2" },
-    { name = "numpy", specifier = ">=2.5.4" },
-    { name = "odc-stac", specifier = ">=0.5.3" },
-    { name = "pandas", specifier = ">=3.1.0" },
-    { name = "planetary-computer", specifier = ">=1.0.0" },
-    { name = "pyproj", specifier = ">=3.8.0" },
-    { name = "pystac-client", specifier = ">=0.9.1" },
-    { name = "python-dotenv", specifier = ">=1.2.4" },
-    { name = "rasterio", specifier = ">=1.5.2" },
-    { name = "rioxarray", specifier = ">=0.23.0" },
-    { name = "torch", specifier = ">=2.15.0" },
 ]
 
 [[package]]

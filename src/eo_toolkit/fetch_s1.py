@@ -5,7 +5,7 @@ from pystac import Item
 from collections import Counter
 
 
-from stac import (
+from .stac import (
     PLANETARY_COMPUTER_URL,
     NoSceneFoundError,
     bbox_around,
@@ -16,7 +16,7 @@ from stac import (
     load_stac_raster,
 )
 
-from fetch import CELL
+from .fetch import CELL
 
 
 def get_s1_manifest(
