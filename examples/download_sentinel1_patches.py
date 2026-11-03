@@ -27,7 +27,13 @@ def download_sentinel1_patches(cfg: DictConfig) -> None:
     patch_dir.mkdir(parents=True, exist_ok=True)
 
     # Fetch the complet multi-year manifest
-    raw_manifest = get_s1_manifest(cfg.region.longitude, cfg.region.latitude, cfg.region.size_m, f"{YEARS[0]}-01-01", f"{YEARS[-1]}-12-31")
+    raw_manifest = get_s1_manifest(
+        cfg.region.longitude,
+        cfg.region.latitude,
+        cfg.region.size_m,
+        f"{YEARS[0]}-01-01",
+        f"{YEARS[-1]}-12-31"
+    )
 
     # Process year by year
     for year in YEARS:
