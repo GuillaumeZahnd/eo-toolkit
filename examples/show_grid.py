@@ -37,7 +37,7 @@ def show_grid(cfg: DictConfig) -> None:
 
     output_path = output_dir / "grid_map.html"
     m.save(str(output_path))
-    
+
     print(f"Grid generated: {output_path}.")
 
 

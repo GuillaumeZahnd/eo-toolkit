@@ -9,7 +9,7 @@ from eo_toolkit import (
     fetch_s1_image,
     filter_manifest_by_best_orbit,
     log_orbit_audit
-)    
+)
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def download_sentinel1_patches(cfg: DictConfig) -> None:
@@ -19,7 +19,7 @@ def download_sentinel1_patches(cfg: DictConfig) -> None:
     REQUIRED_BANDS = ("vv", "vh")
     LOG_NAME = f"sentinel1_orbitals_{YEARS[0]}_{YEARS[-1]}_{cfg.longitude}_{cfg.latitude}_{cfg.size_m}.txt"
     DATA_COLLECTION_NAME = f"sentinel1_lat_{cfg.latitude}_lon_{cfg.longitude}_size_{cfg.size_m}"
-       
+
     log_file_path = cfg.cfg.path_to_logs / LOG_NAME
     if log_file_path.exists():
         log_file_path.unlink()
@@ -32,12 +32,12 @@ def download_sentinel1_patches(cfg: DictConfig) -> None:
 
     # Process year by year
     for year in YEARS:
-    
+
         # Filter the manifest items belonging strictly to this calendar year
-        year_items = [item for item in raw_manifest if pd.Timestamp(item["date"]).year == year]        
+        year_items = [item for item in raw_manifest if pd.Timestamp(item["date"]).year == year]
         if not year_items:
             continue
-            
+
         # Find the most consistent orbit for this specific year
         clean_year_manifest, best_orbit, all_counts = filter_manifest_by_best_orbit(
             year_items,
@@ -51,12 +51,12 @@ def download_sentinel1_patches(cfg: DictConfig) -> None:
         # Fetch and save each acquisition to disk (with caching logic)
         for entry in clean_year_manifest:
             file_path = patch_dir / f"{entry['date']}.npz"
-            
+
             if file_path.exists():
                 continue  # Skip downloading if already cached locally
-                
+
             arr, exact_date = fetch_s1_image(entry["_item_obj"], cfg.longitude, cfg.latitude, cfg.size_m)
-            
+
             np.savez_compressed(
                 file_path,
                 data=arr,
@@ -65,8 +65,8 @@ def download_sentinel1_patches(cfg: DictConfig) -> None:
             )
 
     print(f"Download complete.\nLogs saved to {log_file_path}.\nRaster patches saved to {patch_dir}.")
-    
-    
+
+
 if __name__ == "__main__":
     download_sentinel1_patches()
 

@@ -1,6 +1,7 @@
 from .logs import (
     log_orbit_audit,
 )
+
 from .fetch_s1 import (
     get_s1_manifest,
     fetch_s1_image,
@@ -18,6 +19,10 @@ from .stac import (
     load_stac_raster,
 )
 
+from .load_cached_sentinel1_as_numpy_tensor import (
+    load_cached_sentinel1_as_numpy_tensor,
+)    
+
 __all__ = [
     # logs
     "log_orbit_audit",
@@ -34,4 +39,6 @@ __all__ = [
     "item_date"
     "search_stac"
     "load_stac_raster"
+    # load_cached_sentinel1_as_numpy_tensor
+    "load_cached_sentinel1_as_numpy_tensor"
 ]
