@@ -44,4 +44,5 @@
 - **NDMI:** Normalized Difference Moisture Index, describes the crop’s water stress level (`NDMI := NIR-SWIR)/(NIR+SWIR)`)
 - **NDRE:** Normalized Difference Red Edge Index, describes the amount of chlorophyll in a plant (`NDRE = (NIR-RE)/(NIR+RE)`)
 - **NDVI:** Normalized Difference Vegetation Index, describes the vigour level of the crop (`NDVI := (NIR-Red)/(NIR+Red)`)
+- **RVI:** Radar Vegetation Index (`RVI = (4 * VH) / (VV + VH)`, for the dual-polarization approximation)
 
