@@ -33,34 +33,37 @@ def correlated_seasonal_mann_kendall(s: pd.Series, alpha: float = 0.05) -> Dict[
         "sen_slope_per_year": r.slope,
         "n_months": int(s_freq.notna().sum())
     }
-    
-    
-def compute_residuals(s: pd.Series) -> pd.Series:
+
+
+def compute_residuals_and_baseline(s: pd.Series) -> tuple[pd.Series, pd.Series]:
     """
-    De-seasons and de-trends a monthly time series to extract residual anomalies.
-    
+    De-seasons and de-trends a monthly time series to extract residual anomalies
+    and the reconstructed baseline model.
+
     Parameters:
     -----------
     s : pd.Series
         Monthly time series with a DatetimeIndex ('MS' frequency).
-        
+
     Returns:
     --------
-    pd.Series
-        The residual anomalies with seasonality and linear trend removed.
+    Tuple[pd.Series, pd.Series]
+        - residuals: Residual anomalies with seasonality and linear trend removed.
+        - baseline: Expected baseline signal (seasonal multi-year median + linear trend).
     """
     # De-seasoning: Subtract the multi-year monthly median for each calendar month
     monthly_baselines = s.groupby(s.index.month).transform("median")
     deseasoned = s - monthly_baselines
-    
+
     # De-trending: Fit a linear trend line via least squares and remove it
     time_idx = np.arange(len(deseasoned))
     valid_mask = deseasoned.notna()
-    
-    # Fit linear slope and intercept on valid points
+
     slope, intercept = np.polyfit(time_idx[valid_mask], deseasoned[valid_mask], 1)
     trend_component = pd.Series(slope * time_idx + intercept, index=deseasoned.index)
-    
-    # Residuals
+
+    # Residuals and reconstructed baseline
     residuals = deseasoned - trend_component
-    return residuals    
+    baseline = s - residuals  # Recombines seasonal baseline + linear trend
+
+    return residuals, baseline
