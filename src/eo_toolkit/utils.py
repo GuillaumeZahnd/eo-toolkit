@@ -1,6 +1,48 @@
 import pandas as pd
 import numpy as np
+from scipy.interpolate import interp1d
 from numpy.typing import NDArray
+
+
+def interpolate_tensor_to_regular_grid(
+    data_tensor: NDArray[np.float32],
+    dates: NDArray[np.datetime64],
+    freq: str = "6D"
+) -> tuple[NDArray[np.float32], NDArray[np.datetime64]]:
+    """
+    Interpolates a 4D Sentinel-1 data tensor (time, bands, height, width) 
+    from irregular observation dates onto a regular temporal grid.
+    
+    Parameters:
+    - data_tensor: 4D numpy array of shape (time, bands, height, width).
+    - dates: Array-like of datetimes corresponding to the time axis.
+    - freq: Target frequency string compatible with pandas (e.g., '6D' or '12D').
+    
+    Returns:
+    - interpolated_tensor: 4D numpy array resampled to the regular grid.
+    - regular_dates: 1D array of regular datetime64 timestamps.
+    """
+    # Convert input dates to numeric timestamps for interpolation
+    dt_dates = pd.to_datetime(dates)
+    x_original = dt_dates.astype(np.int64).values.astype(float)
+    
+    # Create a regular target date range covering the exact same temporal span
+    regular_dt_dates = pd.date_range(start=dt_dates[0], end=dt_dates[-1], freq=freq)
+    x_target = regular_dt_dates.astype(np.int64).values.astype(float)
+    
+    # Use scipy's interp1d along the time axis (axis=0) for multi-dimensional arrays
+    interpolator = interp1d(
+        x_original, 
+        data_tensor, 
+        kind="linear", 
+        axis=0, 
+        bounds_error=False, 
+        fill_value="extrapolate"
+    )
+    
+    interpolated_tensor = interpolator(x_target)
+    
+    return interpolated_tensor.astype(np.float32), regular_dt_dates.values.astype("datetime64[ns]")
 
 
 def compute_sentinel1_radar_index(

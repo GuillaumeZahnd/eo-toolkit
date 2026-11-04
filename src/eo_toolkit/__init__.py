@@ -44,6 +44,7 @@ from .statistics import (
 )
 
 from .utils import (
+    interpolate_tensor_to_regular_grid,
     compute_sentinel1_radar_index,
     compute_monthly_median,
     compute_patch_series,
@@ -83,6 +84,7 @@ __all__ = [
     "correlated_seasonal_mann_kendall",
     "compute_residuals_and_baseline",
     # utils
+    "interpolate_tensor_to_regular_grid",
     "compute_sentinel1_radar_index",
     "compute_monthly_median",
     "compute_patch_series",

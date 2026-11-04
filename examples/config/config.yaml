@@ -1,5 +1,5 @@
 defaults:
-  - region: darney
+  - region: fontainebleau
   - _self_
 
 path_to_logs: logs

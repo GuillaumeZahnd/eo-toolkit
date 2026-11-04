@@ -46,7 +46,7 @@ def bootstrap_cusum_paths(
     end_date: str,
     nb_harmonics: int = 2,
     nb_bootstraps: int = 1000,
-    block_size: int = 12,
+    block_size: int = 6,
     slack: float = 0.1,
     seed: int = 0
 ) -> NDArray[np.float32]:
