@@ -16,12 +16,11 @@ from eo_toolkit import (
 )
 
 from viz import (
-    plot_random_pixel_baselines,
-    plot_monitoring_and_residuals,
+    plot_pixelwise_harmonic_fit_with_residuals,
     plot_bootstrap_cusum_envelope,
     plot_alarm_thresholds,
     plot_anomaly_summary,
-    plot_pixel_cusum_trajectories,
+    plot_pixelwise_cusum_trajectories,
 )
 
 
@@ -52,7 +51,7 @@ def example_cusum(cfg: DictConfig) -> None:
     data_tensor_raw = np.concatenate([sentinel1_data["bands"], radar_index_tensor], axis=1)
 
     # Fit harmonic baseline on original irregular dates (capturing baseline_data)
-    baseline_data, baseline_coefficients, baseline_dates, t_baseline = compute_harmonic_baselines(
+    _, baseline_coefficients, baseline_dates, _ = compute_harmonic_baselines(
         data_tensor=data_tensor_raw,
         dates=sentinel1_data["dates"],
         start_date=baseline_start_date,
@@ -60,13 +59,26 @@ def example_cusum(cfg: DictConfig) -> None:
         nb_harmonics=nb_harmonics
     )
 
-    plot_random_pixel_baselines(
-        data_tensor=baseline_data,
+    # Compute expected baseline and residuals (for the baseline period)
+    baseline_expected, baseline_residuals, baseline_obs_data, baseline_obs_dates = compute_expected_baseline_and_residuals(
+        data_tensor=data_tensor_raw,
+        dates=sentinel1_data["dates"],
         coefficients=baseline_coefficients,
-        t_baseline=t_baseline,
-        dates=baseline_dates,
+        start_date=baseline_start_date,
+        end_date=baseline_end_date,
+        nb_harmonics=nb_harmonics
+    )
+
+    # Plot baseline fit and baseline residuals side-by-side
+    plot_pixelwise_harmonic_fit_with_residuals(
+        data=baseline_obs_data,
+        expected=baseline_expected,
+        residuals=baseline_residuals,
+        dates=baseline_obs_dates,
         pixel_coordinates=pixel_coordinates,
-        band_idx=2
+        band_idx=2,
+        band_name="VH - VV Radar Index",
+        period_type="baseline",
     )
 
     # Generate bootstrap CUSUM paths for threshold calibration
@@ -109,14 +121,15 @@ def example_cusum(cfg: DictConfig) -> None:
         nb_harmonics=nb_harmonics
     )
 
-    plot_monitoring_and_residuals(
-        monitoring_data=raw_monitoring_data,
-        baseline_expected=raw_baseline_expected,
+    plot_pixelwise_harmonic_fit_with_residuals(
+        data=raw_monitoring_data,
+        expected=raw_baseline_expected,
         residuals=raw_monitoring_residuals,
         dates=raw_monitoring_dates,
         pixel_coordinates=pixel_coordinates,
         band_idx=2,
-        band_name="VH - VV Radar Index"
+        band_name="VH - VV Radar Index",
+        period_type="monitoring",
     )
 
     # Regularly interpolate the monitoring residuals to a uniform 6-day grid
@@ -138,7 +151,7 @@ def example_cusum(cfg: DictConfig) -> None:
         band_titles=["VV Band", "VH Band", "VH - VV Radar Index"]
     )
 
-    plot_pixel_cusum_trajectories(
+    plot_pixelwise_cusum_trajectories(
         monitoring_cusum=monitoring_cusum,
         alarm_threshold=alarm_threshold,
         dates=monitoring_dates_interpolated,

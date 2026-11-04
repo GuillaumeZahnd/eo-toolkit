@@ -1,106 +1,75 @@
 import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
+import pandas as pd
 from numpy.typing import NDArray
 
 # Ensure the output directory exists
 Path("images").mkdir(parents=True, exist_ok=True)
 
 
-def plot_random_pixel_baselines(
-    data_tensor: NDArray[np.float32],
-    coefficients: NDArray[np.float64],
-    t_baseline: NDArray[np.float64],
-    dates: NDArray[np.datetime64],
-    pixel_coordinates: list[tuple[int, int]],
-    band_idx: int = 0  # [vv, vh, ratio]
-) -> None:
-    """Plots a 2x2 grid of 4 specified pixel coordinates comparing raw baseline time series
-    against the fitted harmonic model.
-    """
-    n_coeffs = coefficients.shape[-1]
-    num_harmonics = (n_coeffs - 1) // 2
-
-    X_cols = [np.ones_like(t_baseline)]
-    for k in range(1, num_harmonics + 1):
-        X_cols.append(np.cos(2.0 * np.pi * k * t_baseline))
-        X_cols.append(np.sin(2.0 * np.pi * k * t_baseline))
-    X = np.column_stack(X_cols)
-    
-    fig, axes = plt.subplots(2, 2, figsize=(14, 7), sharex=True)
-    axes = axes.flatten()
-
-    for idx, (h, w) in enumerate(pixel_coordinates):
-        ax = axes[idx]
-
-        y_raw = data_tensor[:, band_idx, h, w]
-        beta = coefficients[band_idx, h, w, :]
-        y_fit = X @ beta
-
-        ax.plot(dates, y_raw, 'ko', markersize=3, alpha=0.5, label='Raw Data')
-        ax.plot(dates, y_fit, 'r-', linewidth=2, label='Harmonic Fit')
-
-        ax.set_title(f"Pixel [{h}, {w}]", fontsize=10)
-        ax.grid(True, linestyle='--', alpha=0.5)
-        if idx == 0:
-            ax.legend(loc='upper right', fontsize=8)
-
-    plt.suptitle(f"Baseline Harmonic Fits (Band {band_idx}) - 4-Pixel Sample", fontsize=14)
-    plt.tight_layout()
-    
-    output_path = Path("images") / f"{plot_random_pixel_baselines.__name__}.png"
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-
-
-
-def plot_monitoring_and_residuals(
-    monitoring_data: NDArray[np.float32],
-    baseline_expected: NDArray[np.float32],
+def plot_pixelwise_harmonic_fit_with_residuals(
+    data: NDArray[np.float32],
+    expected: NDArray[np.float32],
     residuals: NDArray[np.float32],
     dates: NDArray[np.datetime64],
     pixel_coordinates: list[tuple[int, int]],
     band_idx: int = 2,
-    band_name: str = "VH - VV Radar Index"
+    band_name: str = "VH - VV Radar Index",
+    period_type: str = "Baseline"  # Baseline vs Monitoring
 ) -> None:
-    """Plots a grid of specified pixel coordinates comparing the monitoring observations 
-    against the expected baseline, alongside their resulting residuals.
-    """
+    """Plots observations with harmonic fit alongside residuals to verify noise characteristics."""
     n_samples = len(pixel_coordinates)
-    
     fig, axes = plt.subplots(n_samples, 2, figsize=(14, 3 * n_samples), sharex=True)
     if n_samples == 1:
         axes = np.expand_dims(axes, axis=0)
         
     for idx, (h, w) in enumerate(pixel_coordinates):
-        obs = monitoring_data[:, band_idx, h, w]
-        pred = baseline_expected[:, band_idx, h, w]
+        obs = data[:, band_idx, h, w]
+        pred = expected[:, band_idx, h, w]
         res = residuals[:, band_idx, h, w]
         
-        ax_ts = axes[idx, 0]
-        ax_ts.plot(dates, obs, 'ko-', markersize=3, alpha=0.5, label='Observed Data')
-        ax_ts.plot(dates, pred, 'r-', linewidth=2, label='Expected Baseline')
-        ax_ts.set_ylabel("Backscatter / Index", fontsize=9)
-        ax_ts.set_title(f"Pixel [{h}, {w}] - {band_name}", fontsize=10)
-        ax_ts.grid(True, linestyle='--', alpha=0.5)
+        # --- Left: Raw Data vs Harmonic Fit ---
+        ax_fit = axes[idx, 0]
+        ax_fit.plot(dates, obs, 'ko', markersize=3, alpha=0.5, label=f'{period_type} data')
+        ax_fit.plot(dates, pred, 'r-', linewidth=2, label='Harmonic fit')
+        ax_fit.set_ylabel("Index [a.u.]", fontsize=9)
+        ax_fit.set_xlabel("Time", fontsize=9)        
+        ax_fit.set_title(f"Pixel [{h}, {w}] - {period_type} and harmonic fit", fontsize=10)
+        ax_fit.grid(True, linestyle='--', alpha=0.5)
+        ax_fit.tick_params(axis='x', rotation=90)
         if idx == 0:
-            ax_ts.legend(loc='upper right', fontsize=8)
+            ax_fit.legend(loc='upper right', fontsize=8)
             
+        # --- Right: Residuals with Percentile Lines ---
         ax_res = axes[idx, 1]
-        ax_res.plot(dates, res, 'b-', linewidth=1.5, label='Residual (Base - Obs)')
+        ax_res.plot(dates, res, 'b-', linewidth=1.5, label='Residual')
         ax_res.axhline(0, color='gray', linestyle='--', linewidth=1)
-        ax_res.fill_between(dates, res, 0, where=(res > 0), color='salmon', alpha=0.3, label='Positive Deviation (Stress)')
-        ax_res.set_ylabel("Residual Value", fontsize=9)
-        ax_res.set_title(f"Pixel [{h}, {w}] - Residual Deviation", fontsize=10)
+        
+        # Compute residual percentiles for this specific pixel
+        p50 = np.percentile(res, 50)
+        p95 = np.percentile(res, 95)
+        p99 = np.percentile(res, 99)
+        
+        # Plot percentile reference lines
+        ax_res.axhline(p50, color='forestgreen', linestyle='--', linewidth=1, label='median' if idx == 0 else "")
+        ax_res.axhline(p95, color='darkorange', linestyle='--', linewidth=1, label='95th percentile' if idx == 0 else "")
+        ax_res.axhline(p99, color='crimson', linestyle='--', linewidth=1, label='99th percentile' if idx == 0 else "")
+        
+        ax_res.set_ylabel("Residual", fontsize=9)
+        ax_res.set_xlabel("Time", fontsize=9)
+        ax_res.set_title(f"Pixel [{h}, {w}] - Residuals", fontsize=10)
         ax_res.grid(True, linestyle='--', alpha=0.5)
+        ax_res.tick_params(axis='x', rotation=90)
         if idx == 0:
             ax_res.legend(loc='upper right', fontsize=8)
 
-    plt.xlabel("Monitoring Date", fontsize=10)
+    plt.suptitle(f"{period_type} data, Harmonic fit, and Residuals (Band {band_idx})", fontsize=14)
     plt.tight_layout()
     
-    output_path = Path("images") / f"{plot_monitoring_and_residuals.__name__}.png"
+    output_path = Path("images") / f"plot_pixelwise_harmonic_fit_with_residuals_{period_type.lower()}.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
-
+    plt.close()
 
 
 def plot_bootstrap_cusum_envelope(
@@ -133,17 +102,19 @@ def plot_bootstrap_cusum_envelope(
         
         ax.set_title(f"Pixel [{h}, {w}] - {band_name}", fontsize=10)
         ax.set_ylabel("CUSUM Accumulation", fontsize=9)
+        ax.set_xlabel("Time", fontsize=9)        
         ax.grid(True, linestyle='--', alpha=0.5)
         if idx == 0:
             ax.legend(loc='upper left', fontsize=8)
+            
+        ax.tick_params(axis='x', rotation=90)            
 
-    plt.xlabel("Baseline Time Axis", fontsize=10)
+
     plt.suptitle("Bootstrap CUSUM Noise Envelopes (Calibration Check)", fontsize=14)
     plt.tight_layout()
     
-    output_path = Path("images") / f"{plot_bootstrap_cusum_envelope.__name__}.png"
+    output_path = Path("images") / "plot_bootstrap_cusum_envelope.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
-
 
 
 def plot_alarm_thresholds(
@@ -165,7 +136,7 @@ def plot_alarm_thresholds(
     plt.suptitle("CUSUM alarm thresholds", fontsize=14)
     plt.tight_layout()
     
-    output_path = Path("images") / f"{plot_alarm_thresholds.__name__}.png"
+    output_path = Path("images") / f"plot_alarm_thresholds.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
 
 
@@ -195,11 +166,11 @@ def plot_anomaly_summary(
         ax_temporal.plot(dates, temporal_counts[:, b_idx], color='crimson', linewidth=1.5, label='Active Anomalies')
         ax_temporal.set_title(f"Global Timeline - {band_titles[b_idx]}", fontsize=10)
         ax_temporal.set_ylabel("Global Pixel Count", fontsize=9)
-        ax_temporal.set_xlabel("Monitoring Date", fontsize=9)
+        ax_temporal.set_xlabel("Time", fontsize=9)
         ax_temporal.grid(True, linestyle='--', alpha=0.5)
         ax_temporal.tick_params(axis='x', rotation=15)
 
-    plt.suptitle("CUSUM Forest Health Monitoring - Rolling Window Anomaly Summary", fontsize=14)
+    plt.suptitle("CUSUM anomaly summary", fontsize=14)
     plt.tight_layout()
     
     output_path = Path("images") / f"{plot_anomaly_summary.__name__}.png"
@@ -207,7 +178,7 @@ def plot_anomaly_summary(
 
 
 
-def plot_pixel_cusum_trajectories(
+def plot_pixelwise_cusum_trajectories(
     monitoring_cusum: NDArray[np.float32],
     alarm_threshold: NDArray[np.float32],
     dates: NDArray[np.datetime64],
@@ -216,7 +187,7 @@ def plot_pixel_cusum_trajectories(
     band_name: str = "VH - VV Radar Index"
 ) -> None:
     """Plots the continuous forward-marching CUSUM accumulation path against the pixel-specific 
-    alarm threshold for selected pixel coordinates.
+    alarm threshold, highlighting active alarm windows and coloring points above the threshold distinctly.
     """
     n_pixels = len(pixel_coordinates)
     n_cols = 2 if n_pixels > 1 else 1
@@ -238,25 +209,47 @@ def plot_pixel_cusum_trajectories(
         threshold_val = alarm_threshold[band_idx, h, w]
         pixel_alerts = cusum_path > threshold_val
 
+        # Plot base path line
         ax.plot(dates, cusum_path, color='dodgerblue', linewidth=1.5, label='CUSUM Path')
-        ax.axhline(threshold_val, color='crimson', linestyle='--', linewidth=1.5, label=f'Threshold ({threshold_val:.2f})')
-
+        
+        # Split markers into normal (below threshold) and alert (above threshold)
+        normal_mask = ~pixel_alerts
+        if np.any(normal_mask):
+            ax.plot(dates[normal_mask], cusum_path[normal_mask], 'o', color='dodgerblue', markersize=3, alpha=0.6, label='Normal' if idx == 0 else "")
         if np.any(pixel_alerts):
-            ax.plot(dates[pixel_alerts], cusum_path[pixel_alerts], 'ro', markersize=5, label='Alarm Triggered')
+            ax.plot(dates[pixel_alerts], cusum_path[pixel_alerts], 'o', color='crimson', markersize=5, label='Above Threshold' if idx == 0 else "")
+
+        ax.axhline(threshold_val, color='crimson', linestyle='--', linewidth=1.5, label=f'Threshold ({threshold_val:.2f})' if idx == 0 else "")
+
+        # Highlight active alarm periods with a soft span and first-trigger annotation
+        if np.any(pixel_alerts):
+            alert_indices = np.where(pixel_alerts)[0]
+            first_idx = alert_indices[0]
+            
+            ax.axvspan(dates[alert_indices[0]], dates[alert_indices[-1]], color='salmon', alpha=0.25, label='Active Alarm Window' if idx == 0 else "")
+            
+            ax.annotate(
+                f"{pd.to_datetime(dates[first_idx]).strftime('%Y-%m-%d')}",
+                xy=(dates[first_idx], cusum_path[first_idx]),
+                xytext=(0, 15), textcoords='offset points',
+                ha='center', fontsize=8, fontweight='bold', color='black',
+                arrowprops=dict(arrowstyle='->', color='black', lw=1)
+            )
 
         ax.set_title(f"Pixel [{h}, {w}] - {band_name}", fontsize=10)
         ax.set_ylabel("CUSUM Accumulation", fontsize=9)
+        ax.set_xlabel("Time", fontsize=9)
         ax.grid(True, linestyle='--', alpha=0.5)
+        ax.tick_params(axis='x', rotation=90)
         if idx == 0:
             ax.legend(loc='upper left', fontsize=8)
 
     for idx in range(n_pixels, len(axes)):
         axes[idx].axis('off')
 
-    plt.xlabel("Monitoring Date", fontsize=10)
     plt.suptitle(f"Pixel-Level Continuous CUSUM Trajectories & Alarm Triggers ({band_name})", fontsize=14)
     plt.tight_layout()
     
-    output_path = Path("images") / f"{plot_pixel_cusum_trajectories.__name__}.png"
+    output_path = Path("images") / "plot_pixel_cusum_trajectories.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
-
+    plt.close()
