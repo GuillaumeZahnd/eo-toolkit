@@ -21,6 +21,7 @@ from viz import (
     plot_alarm_thresholds,
     plot_anomaly_summary,
     plot_pixelwise_cusum_trajectories,
+    plot_spatial_first_alarms,
 )
 
 
@@ -37,10 +38,10 @@ def example_cusum(cfg: DictConfig) -> None:
 
     # Forward marching
     observation_start_date = baseline_end_date
-    observation_end_date = "2027-12-31"
+    observation_end_date = "2026-12-31"
 
     nb_harmonics = 2
-    cusum_slack = 0.2
+    cusum_slack = 1.0  # Higher slack aloows the path to reset to zero during healthy periods
     cusum_percentile = 99
 
     # Standard sample pixels for localized inspections
@@ -172,6 +173,12 @@ def example_cusum(cfg: DictConfig) -> None:
         monitoring_dates_interpolated[idx] if idx != -1 else pd.NaT
         for idx in first_alarm_indices.reshape(-1)
     ]).reshape(n_bands, height, width)
+
+    plot_spatial_first_alarms(
+        first_alarm_dates=first_alarm_dates,
+        monitoring_dates=monitoring_dates_interpolated,
+        band_titles=["VV Band", "VH Band", "VH - VV Radar Index"]
+    )
 
     print("Pipeline executed successfully. All figures saved in 'images/'.")
 
