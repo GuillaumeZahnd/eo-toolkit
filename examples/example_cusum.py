@@ -8,7 +8,7 @@ from eo_toolkit import (
     load_cached_sentinel1_as_numpy_tensor,
     compute_harmonic_baselines,
     compute_sentinel1_radar_index,
-    compute_expected_baseline_and_residuals,
+    bootstrap_baseline_residuals,
 )
 
 
@@ -39,15 +39,19 @@ def example_cusum(cfg: DictConfig) -> None:
         nb_harmonics=nb_harmonics
     )
 
-    baseline_expected, residuals, _, _ = compute_expected_baseline_and_residuals(
+    # Generate bootstrap residual replicates for threshold calibration
+    bootstrapped_residuals = bootstrap_baseline_residuals(
         data_tensor=data_tensor,
         dates=sentinel1_data["dates"],
         coefficients=baseline_coefficients,
-        start_date=observation_start_date,
-        end_date=observation_end_date,
+        start_date=baseline_start_date,
+        end_date=baseline_end_date,
         nb_harmonics=nb_harmonics,
+        nb_bootstraps=500,
+        block_size=12
     )
 
+    print(bootstrapped_residuals.shape)
 
 if __name__ == "__main__":
     example_cusum()

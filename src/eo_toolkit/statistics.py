@@ -7,6 +7,72 @@ from numpy.typing import NDArray
 from .utils import slice_tensor_with_time_interval
 
 
+def bootstrap_baseline_residuals(
+    data_tensor: NDArray[np.float32],
+    dates: NDArray[np.datetime64] | list[str],
+    coefficients: NDArray[np.float64],
+    start_date: str,
+    end_date: str,
+    nb_harmonics: int = 2,
+    nb_bootstraps: int = 1000,
+    block_size: int = 12,
+    seed: int = 0
+) -> NDArray[np.float64]:
+    """Generates synthetic bootstrap replicates of baseline residuals using
+    moving block bootstrap to preserve temporal autocorrelation.
+
+    Parameters:
+    - data_tensor: 4D array of shape (time, bands, height, width) for the full dataset.
+    - dates: Array or list of timestamps matching the time dimension.
+    - coefficients: Fitted harmonic coefficients of shape (bands, height, width, n_coeffs).
+    - start_date: Start date string for the baseline period.
+    - end_date: End date string for the baseline period.
+    - nb_harmonics: Number of harmonic components used in the baseline model.
+    - nb_bootstraps: Number of bootstrap sample paths to generate.
+    - block_size: Length of temporal blocks for resampling (in number of observations).
+    - seed: Random seed for reproducibility.
+
+    Returns:
+    - NDArray: Resampled bootstrap residuals tensor of shape (nb_bootstraps, time, bands, height, width).
+    """
+    np.random.seed(seed)
+
+    # Extract baseline residuals from the reference healthy period
+    _, baseline_residuals, _, _ = compute_expected_baseline_and_residuals(
+        data_tensor=data_tensor,
+        dates=dates,
+        coefficients=coefficients,
+        start_date=start_date,
+        end_date=end_date,
+        nb_harmonics=nb_harmonics
+    )
+
+    nb_timesteps, nb_bands, height, width = baseline_residuals.shape
+
+    # Storage for bootstrap paths
+    bootstrap_samples = np.empty((nb_bootstraps, nb_timesteps, nb_bands, height, width), dtype=np.float32)
+
+    # Number of blocks required to cover the time dimension
+    nb_blocks = int(np.ceil(nb_timesteps / block_size))
+
+    for b in range(nb_bootstraps):
+        # Randomly select starting indices for the blocks
+        block_starts = np.random.randint(0, nb_timesteps - block_size + 1, size=nb_blocks)
+
+        # Construct synthetic time index path by stitching blocks together
+        resampled_indices = []
+        for start_idx in block_starts:
+            resampled_indices.extend(range(start_idx, start_idx + block_size))
+
+        # Trim to exact original time length
+        resampled_indices = resampled_indices[:nb_timesteps]
+
+        # Populate bootstrap replicate across all pixels and bands simultaneously
+        bootstrap_samples[b] = baseline_residuals[resampled_indices, :, :, :]
+
+    return bootstrap_samples
+
+
 def compute_expected_baseline_and_residuals(
     data_tensor: NDArray[np.float32],
     dates: NDArray[np.datetime64] | list[str],
@@ -83,7 +149,7 @@ def compute_harmonic_baselines(
         data_tensor, dates, start_date, end_date
     )
 
-    n_time, n_bands, height, width = baseline_data_tensor.shape
+    nb_timesteps, nb_bands, height, width = baseline_data_tensor.shape
 
     X_cols = [np.ones_like(baseline_t)]
     for k in range(1, nb_harmonics + 1):
@@ -93,14 +159,14 @@ def compute_harmonic_baselines(
     X = np.column_stack(X_cols)
     nb_coefficients = X.shape[1]
 
-    reshaped_tensor = baseline_data_tensor.reshape(n_time, n_bands * height * width)
+    reshaped_tensor = baseline_data_tensor.reshape(nb_timesteps, nb_bands * height * width)
     valid_time_mask = ~np.isnan(reshaped_tensor).any(axis=1)
 
     X_clean = X[valid_time_mask]
     Y_clean = reshaped_tensor[valid_time_mask]
 
     beta_matrix, _, _, _ = np.linalg.lstsq(X_clean, Y_clean, rcond=None)
-    baseline_coefficients = beta_matrix.T.reshape(n_bands, height, width, nb_coefficients)
+    baseline_coefficients = beta_matrix.T.reshape(nb_bands, height, width, nb_coefficients)
 
     return baseline_data_tensor, baseline_coefficients, baseline_dates, baseline_t
 
