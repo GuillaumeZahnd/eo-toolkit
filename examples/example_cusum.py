@@ -43,6 +43,7 @@ def example_cusum(cfg: DictConfig) -> None:
     nb_harmonics = 2
     cusum_slack = 1.0  # Higher slack aloows the path to reset to zero during healthy periods
     cusum_percentile = 99
+    ewma_span = 30
 
     # Standard sample pixels for localized inspections
     pixel_coordinates = [(44, 67), (47, 9), (64, 83), (67, 21)]
@@ -80,6 +81,7 @@ def example_cusum(cfg: DictConfig) -> None:
         band_idx=2,
         band_name="VH - VV Radar Index",
         period_type="baseline",
+        ewma_span=ewma_span,        
     )
 
     # Generate bootstrap CUSUM paths for threshold calibration
@@ -131,6 +133,7 @@ def example_cusum(cfg: DictConfig) -> None:
         band_idx=2,
         band_name="VH - VV Radar Index",
         period_type="monitoring",
+        ewma_span=ewma_span,
     )
 
     # Regularly interpolate the monitoring residuals to a uniform 6-day grid

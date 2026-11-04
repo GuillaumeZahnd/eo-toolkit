@@ -17,10 +17,11 @@ def plot_pixelwise_harmonic_fit_with_residuals(
     pixel_coordinates: list[tuple[int, int]],
     band_idx: int = 2,
     band_name: str = "VH - VV Radar Index",
-    period_type: str = "Baseline"  # Baseline vs Monitoring
+    period_type: str = "Baseline",  # Baseline vs Monitoring
+    ewma_span: int = 30  # Span for smoothing the EWMA trend line
 ) -> None:
-    """Plots observations with harmonic fit alongside residuals as a bar chart 
-    to verify noise characteristics, including residual percentiles.
+    """Plots observations with harmonic fit alongside residuals and an EWMA trend line 
+    in the right column to verify noise characteristics and structural shifts.
     """
     n_samples = len(pixel_coordinates)
     fig, axes = plt.subplots(n_samples, 2, figsize=(14, 3 * n_samples), sharex=True)
@@ -44,31 +45,33 @@ def plot_pixelwise_harmonic_fit_with_residuals(
         if idx == 0:
             ax_fit.legend(loc="upper right", fontsize=8)
             
-        # --- Right: Residuals as a Bar Chart with Percentile Lines ---
+        # --- Right: Residuals & EWMA Trend Line ---
         ax_res = axes[idx, 1]
         ax_res.axhline(0, color="gray", linestyle="--", linewidth=1)
         
-        # Split into positive and negative/zero masks for clean bar coloring
+        # Plot faint raw residuals as a bar chart or scatter for noise context
         pos_mask = res > 0
         neg_mask = res <= 0
+        ax_res.bar(dates[pos_mask], res[pos_mask], width=np.timedelta64(4, "D"), color="crimson", alpha=0.25, label="Positive Residual" if idx == 0 else "")
+        ax_res.bar(dates[neg_mask], res[neg_mask], width=np.timedelta64(4, "D"), color="dodgerblue", alpha=0.25, label="Negative Residual" if idx == 0 else "")
         
-        # Plot bars (using a 4-day width suited for datetime axes)
-        ax_res.bar(dates[pos_mask], res[pos_mask], width=np.timedelta64(4, "D"), color="crimson", alpha=0.7, label="Positive Deviation (Stress)" if idx == 0 else "")
-        ax_res.bar(dates[neg_mask], res[neg_mask], width=np.timedelta64(4, "D"), color="dodgerblue", alpha=0.7, label="Residual (Normal)" if idx == 0 else "")
+        # Compute and plot EWMA trend line
+        ewma_res = pd.Series(res).ewm(span=ewma_span, adjust=False).mean().values
+        ax_res.plot(dates, ewma_res, color="darkblue", linewidth=2, label=f"EWMA (span={ewma_span})" if idx == 0 else "")
         
-        # Compute residual percentiles for this specific pixel
+        # Compute residual percentiles for reference
         p50 = np.percentile(res, 50)
         p95 = np.percentile(res, 95)
         p99 = np.percentile(res, 99)
         
         # Plot percentile reference lines
-        ax_res.axhline(p50, color="forestgreen", linestyle="--", linewidth=1, label="median" if idx == 0 else "")
-        ax_res.axhline(p95, color="darkorange", linestyle="--", linewidth=1, label="95th percentile" if idx == 0 else "")
-        ax_res.axhline(p99, color="crimson", linestyle="--", linewidth=1, label="99th percentile" if idx == 0 else "")
+        ax_res.axhline(p50, color="forestgreen", linestyle=":", linewidth=1, label="median" if idx == 0 else "")
+        ax_res.axhline(p95, color="darkorange", linestyle=":", linewidth=1, label="95th percentile" if idx == 0 else "")
+        ax_res.axhline(p99, color="crimson", linestyle=":", linewidth=1, label="99th percentile" if idx == 0 else "")
         
         ax_res.set_ylabel("Residuals", fontsize=9)
         ax_res.set_xlabel("Time", fontsize=9)
-        ax_res.set_title(f"Pixel [{h}, {w}] - Residuals", fontsize=10)
+        ax_res.set_title(f"Pixel [{h}, {w}] - Residuals & EWMA Trend", fontsize=10)
         ax_res.grid(True, linestyle="--", alpha=0.5)
         ax_res.tick_params(axis="x", rotation=90)
         if idx == 0:
@@ -328,4 +331,4 @@ def plot_spatial_first_alarms(
     
     output_path = Path("images") / "plot_spatial_first_alarms.png"
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.close()
+    plt.close()   
