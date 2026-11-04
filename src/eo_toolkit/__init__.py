@@ -36,10 +36,11 @@ from .load_cached_sentinel2_as_numpy_tensor import (
 
 from .statistics import (
     compute_expected_baseline_and_residuals,
-    bootstrap_baseline_residuals,
+    bootstrap_cusum_paths,
     compute_harmonic_baselines,
     correlated_seasonal_mann_kendall,
     compute_residuals_and_baseline,
+    compute_one_sided_cusum,
 )
 
 from .utils import (
@@ -75,7 +76,8 @@ __all__ = [
     # load_cached_sentinel2_as_numpy_tensor
     "load_cached_sentinel2_as_numpy_tensor",
     # statistics
-    "bootstrap_baseline_residuals",
+    "compute_one_sided_cusum",
+    "bootstrap_cusum_paths",
     "compute_expected_baseline_and_residuals",
     "compute_harmonic_baselines",
     "correlated_seasonal_mann_kendall",

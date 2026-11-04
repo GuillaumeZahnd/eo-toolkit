@@ -8,7 +8,9 @@ from eo_toolkit import (
     load_cached_sentinel1_as_numpy_tensor,
     compute_harmonic_baselines,
     compute_sentinel1_radar_index,
-    bootstrap_baseline_residuals,
+    compute_expected_baseline_and_residuals,
+    compute_one_sided_cusum,
+    bootstrap_cusum_paths,
 )
 
 
@@ -26,6 +28,8 @@ def example_cusum(cfg: DictConfig) -> None:
     observation_end_date = "2021-12-31"
 
     nb_harmonics = 2
+    cusum_slack = 0.2
+    cusum_percentile = 99
 
     # Compute the radar index, and concatenate to the data tensor as an additional band
     radar_index_tensor = compute_sentinel1_radar_index(sentinel1_data["bands"], vv_index=0, vh_index=1)
@@ -39,19 +43,39 @@ def example_cusum(cfg: DictConfig) -> None:
         nb_harmonics=nb_harmonics
     )
 
-    # Generate bootstrap residual replicates for threshold calibration
-    bootstrapped_residuals = bootstrap_baseline_residuals(
+    # Generate bootstrap cumsum, for calibration
+    bootstrap_cusums = bootstrap_cusum_paths(
         data_tensor=data_tensor,
         dates=sentinel1_data["dates"],
         coefficients=baseline_coefficients,
         start_date=baseline_start_date,
         end_date=baseline_end_date,
         nb_harmonics=nb_harmonics,
-        nb_bootstraps=500,
-        block_size=12
+        nb_bootstraps=1000,
+        block_size=12,
+        slack=cusum_slack,
     )
 
-    print(bootstrapped_residuals.shape)
+    # Alarm threshold, per band (quantile-based)
+    max_bootstrap_peaks = np.max(bootstrap_cusums, axis=1)  # Shape: (nb_bootstraps, bands, height, width)
+    alarm_threshold = np.percentile(max_bootstrap_peaks, cusum_percentile, axis=0)  # Shape: (bands, height, width)
+
+
+    # Evaluate on the monitoring period
+    _, monitoring_residuals, monitoring_tensor, monitoring_dates = compute_expected_baseline_and_residuals(
+        data_tensor=data_tensor,
+        dates=sentinel1_data["dates"],
+        coefficients=baseline_coefficients,
+        start_date=observation_start_date,
+        end_date=observation_end_date,
+        nb_harmonics=nb_harmonics
+    )
+
+    # Run CUSUM on the monitoring observations
+    monitoring_cusum = compute_one_sided_cusum(monitoring_residuals, slack=cusum_slack)
+
+    # Anomaly detection: If the CUSUM surpasses the bootstrap-derived threshold
+    infestation_alerts = monitoring_cusum > alarm_threshold
 
 if __name__ == "__main__":
     example_cusum()

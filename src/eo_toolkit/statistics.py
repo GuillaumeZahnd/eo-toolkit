@@ -7,7 +7,38 @@ from numpy.typing import NDArray
 from .utils import slice_tensor_with_time_interval
 
 
-def bootstrap_baseline_residuals(
+def compute_one_sided_cusum(
+    residuals: NDArray[np.float32],
+    slack: float = 0.0
+) -> NDArray[np.float32]:
+    """Computes the one-sided upper CuSum chart for a 4D residual tensor
+    to track persistent negative shifts (declines) in radar backscatter/indices.
+
+    Formula: S_t = max(0, S_{t-1} + residual_t - slack)
+
+    Parameters:
+    - residuals: 4D array of shape (time, bands, height, width) representing (baseline - observed).
+    - slack: Allowance parameter (k) to filter out minor high-frequency noise fluctuations.
+
+    Returns:
+    - NDArray: 4D CuSum statistic tensor of shape (time, bands, height, width).
+    """
+    n_time, n_bands, height, width = residuals.shape
+    cusum_tensor = np.empty_like(residuals, dtype=np.float32)
+
+    # Initialize the CuSum accumulator at time t=0 to zero for all pixels/bands
+    current_cusum = np.zeros((n_bands, height, width), dtype=np.float32)
+
+    for t in range(n_time):
+        # Accumulate positive deviations, pulling back by the slack factor,
+        # and clamping at 0 to prevent negative accumulation.
+        current_cusum = np.maximum(0.0, current_cusum + residuals[t] - slack)
+        cusum_tensor[t] = current_cusum
+
+    return cusum_tensor
+
+
+def bootstrap_cusum_paths(
     data_tensor: NDArray[np.float32],
     dates: NDArray[np.datetime64] | list[str],
     coefficients: NDArray[np.float64],
@@ -16,10 +47,11 @@ def bootstrap_baseline_residuals(
     nb_harmonics: int = 2,
     nb_bootstraps: int = 1000,
     block_size: int = 12,
+    slack: float = 0.1,
     seed: int = 0
-) -> NDArray[np.float64]:
-    """Generates synthetic bootstrap replicates of baseline residuals using
-    moving block bootstrap to preserve temporal autocorrelation.
+) -> NDArray[np.float32]:
+    """Generates synthetic bootstrap replicates of CuSum trajectories from baseline residuals
+    using moving block bootstrap to preserve temporal autocorrelation.
 
     Parameters:
     - data_tensor: 4D array of shape (time, bands, height, width) for the full dataset.
@@ -30,10 +62,11 @@ def bootstrap_baseline_residuals(
     - nb_harmonics: Number of harmonic components used in the baseline model.
     - nb_bootstraps: Number of bootstrap sample paths to generate.
     - block_size: Length of temporal blocks for resampling (in number of observations).
+    - slack: Allowance parameter (k) for the CuSum accumulator.
     - seed: Random seed for reproducibility.
 
     Returns:
-    - NDArray: Resampled bootstrap residuals tensor of shape (nb_bootstraps, time, bands, height, width).
+    - NDArray: Resampled bootstrap CuSum tensor of shape (nb_bootstraps, time, bands, height, width).
     """
     np.random.seed(seed)
 
@@ -49,8 +82,11 @@ def bootstrap_baseline_residuals(
 
     nb_timesteps, nb_bands, height, width = baseline_residuals.shape
 
-    # Storage for bootstrap paths
-    bootstrap_samples = np.empty((nb_bootstraps, nb_timesteps, nb_bands, height, width), dtype=np.float32)
+    # Storage for bootstrap CuSum paths
+    bootstrap_cusum_samples = np.empty(
+        (nb_bootstraps, nb_timesteps, nb_bands, height, width),
+        dtype=np.float32
+    )
 
     # Number of blocks required to cover the time dimension
     nb_blocks = int(np.ceil(nb_timesteps / block_size))
@@ -67,10 +103,13 @@ def bootstrap_baseline_residuals(
         # Trim to exact original time length
         resampled_indices = resampled_indices[:nb_timesteps]
 
-        # Populate bootstrap replicate across all pixels and bands simultaneously
-        bootstrap_samples[b] = baseline_residuals[resampled_indices, :, :, :]
+        # Extract resampled raw residuals for this bootstrap replicate
+        resampled_residuals = baseline_residuals[resampled_indices, :, :, :]
 
-    return bootstrap_samples
+        # Run CuSum accumulation on the synthetic resampled path
+        bootstrap_cusum_samples[b] = compute_one_sided_cusum(resampled_residuals, slack=slack)
+
+    return bootstrap_cusum_samples
 
 
 def compute_expected_baseline_and_residuals(
