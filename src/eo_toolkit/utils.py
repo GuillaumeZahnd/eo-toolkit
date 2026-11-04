@@ -1,5 +1,29 @@
 import pandas as pd
 import numpy as np
+from numpy.typing import NDArray
+
+
+def compute_sentinel1_radar_index(
+    data_tensor: NDArray[np.float32],
+    vv_index: int,
+    vh_index: int,
+) -> NDArray[np.float32]:
+    """Computes the radar polarization index (VH - VV in decibel space),
+    preserving the band dimension (reduced to 1).
+
+    Parameters:
+    - data_tensor: 4D array of shape (time, bands, height, width).
+    - vv_index: Index of the VV band along the band axis.
+    - vh_index: Index of the VH band along the band axis.
+
+    Returns:
+    - NDArray: 4D array of shape (time, 1, height, width) representing the VH - VV index.
+    """
+    vv = data_tensor[:, vv_index:vv_index+1, :, :]  # this indexing preserve the band dimension
+    vh = data_tensor[:, vh_index:vh_index+1, :, :]  # this indexing preserve the band dimension
+
+    radar_index_tensor = vh - vv
+    return radar_index_tensor
 
 
 def compute_monthly_median(df: pd.DataFrame, col: str) -> pd.Series:
@@ -79,8 +103,8 @@ def compute_patch_series(
     })
 
     return df.sort_values("date").reset_index(drop=True)
-    
-    
+
+
 def softclip(x, lo=None, hi=None, lo_pct=2, hi_pct=98, smoothness=3.0):
     """Soft clip values using a robust percentile anchor
     and a smooth sigmoidal transition to preserve highlight/shadow detail.
@@ -100,4 +124,35 @@ def softclip(x, lo=None, hi=None, lo_pct=2, hi_pct=98, smoothness=3.0):
     rescaled = 0.5 * (np.tanh(smoothness * (y - 0.5)) / np.tanh(0.5 * smoothness) + 1)
 
     # Fallback clip to strictly keep output in [0, 1] range for matplotlib
-    return np.clip(rescaled, 0, 1)    
+    return np.clip(rescaled, 0, 1)
+
+
+def slice_tensor_with_time_interval(
+    data_tensor: NDArray[np.float32],
+    dates: NDArray[np.datetime64] | list[str],
+    start_date: str,
+    end_date: str
+) -> tuple[NDArray[np.float32], NDArray[np.datetime64], NDArray[np.float64]]:
+    """Slices a 4D spatial-temporal tensor and its corresponding dates based on a date range.
+
+    Parameters:
+    - data_tensor: 4D array of shape (time, bands, height, width).
+    - dates: Array or list of timestamps corresponding to the time axis.
+    - start_date: Start date string (YYYY-MM-DD).
+    - end_date: End date string (YYYY-MM-DD).
+
+    Returns:
+    - tuple containing:
+        - Sliced data tensor subset.
+        - Sliced datetime array.
+        - 1D array of fractional years.
+    """
+    dt_dates = pd.to_datetime(dates)
+    time_mask = (dt_dates >= start_date) & (dt_dates <= end_date)
+    indices = np.where(time_mask)[0]
+
+    sliced_tensor = data_tensor[indices, :, :, :]
+    sliced_dates = dt_dates[indices]
+    t_fractional = sliced_dates.year + (sliced_dates.dayofyear - 1) / 365.25
+
+    return sliced_tensor, sliced_dates, t_fractional

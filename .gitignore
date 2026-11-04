@@ -7,3 +7,4 @@ gcp_outputs
 data/
 eo_toolkit.egg-info
 maps/
+*.png

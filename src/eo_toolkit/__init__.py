@@ -35,13 +35,16 @@ from .load_cached_sentinel2_as_numpy_tensor import (
 )
 
 from .statistics import (
+    compute_harmonic_baselines,
     correlated_seasonal_mann_kendall,
     compute_residuals_and_baseline,
 )
 
 from .utils import (
+    compute_sentinel1_radar_index,
     compute_monthly_median,
     compute_patch_series,
+    slice_tensor_with_time_interval,
 )
 
 __all__ = [
@@ -70,9 +73,12 @@ __all__ = [
     # load_cached_sentinel2_as_numpy_tensor
     "load_cached_sentinel2_as_numpy_tensor",
     # statistics
+    "compute_harmonic_baselines",
     "correlated_seasonal_mann_kendall",
     "compute_residuals_and_baseline",
     # utils
+    "compute_sentinel1_radar_index",
     "compute_monthly_median",
     "compute_patch_series",
+    "slice_tensor_with_time_interval",
 ]

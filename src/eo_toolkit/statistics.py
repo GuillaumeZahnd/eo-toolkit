@@ -2,6 +2,57 @@ from typing import Any, Dict
 import pandas as pd
 import numpy as np
 import pymannkendall as mk
+from numpy.typing import NDArray
+
+from .utils import slice_tensor_with_time_interval
+
+
+def compute_harmonic_baselines(
+    data_tensor: NDArray[np.float32],
+    dates: NDArray[np.datetime64] | list[str],
+    start_date: str,
+    end_date: str,
+    num_harmonics: int = 2
+) -> tuple[NDArray[np.float64], NDArray[np.datetime64], NDArray[np.float64]]:
+    """Computes vectorized harmonic baseline coefficients and returns the associated baseline time metadata.
+
+    Parameters:
+    - data_tensor: 4D array of shape (time, bands, height, width).
+    - dates: Array or list of timestamps matching the time dimension.
+    - start_date: Start date string for the baseline period.
+    - end_date: End date string for the baseline period.
+    - num_harmonics: Number of harmonic components to fit per pixel.
+
+    Returns:
+    - tuple containing:
+        - baseline_coefficients: 4D array of shape (bands, height, width, n_coeffs).
+        - baseline_dates: Sliced datetime array.
+        - baseline_t: 1D array of fractional years.
+    """
+    baseline_data_tensor, baseline_dates, baseline_t = slice_tensor_with_time_interval(
+        data_tensor, dates, start_date, end_date
+    )
+
+    n_time, n_bands, height, width = baseline_data_tensor.shape
+
+    X_cols = [np.ones_like(baseline_t)]
+    for k in range(1, num_harmonics + 1):
+        X_cols.append(np.cos(2.0 * np.pi * k * baseline_t))
+        X_cols.append(np.sin(2.0 * np.pi * k * baseline_t))
+
+    X = np.column_stack(X_cols)
+    n_coeffs = X.shape[1]
+
+    reshaped_tensor = baseline_data_tensor.reshape(n_time, n_bands * height * width)
+    valid_time_mask = ~np.isnan(reshaped_tensor).any(axis=1)
+
+    X_clean = X[valid_time_mask]
+    Y_clean = reshaped_tensor[valid_time_mask]
+
+    beta_matrix, _, _, _ = np.linalg.lstsq(X_clean, Y_clean, rcond=None)
+    baseline_coefficients = beta_matrix.T.reshape(n_bands, height, width, n_coeffs)
+
+    return baseline_coefficients, baseline_dates, baseline_t
 
 
 def correlated_seasonal_mann_kendall(s: pd.Series, alpha: float = 0.05) -> Dict[str, Any]:

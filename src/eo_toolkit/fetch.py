@@ -20,7 +20,6 @@ from .stac import (
 
 
 CELL = 30  # Working spatial resolution in meters
-BAD_SCL = [0, 1, 3, 8, 9, 10]  # Sentinel-2 Scene Classification Layer cloud/invalid mask values
 
 
 def grid_of(lon: float, lat: float, size_m: float) -> tuple[int, int, tuple[int, int]]:
@@ -61,27 +60,6 @@ def rows_from_array(values: dict[str, np.ndarray], grid: tuple[int, int, tuple[i
         **{k: v.ravel() for k, v in values.items()}
     })
     return df.dropna(subset=list(values), how="all")
-
-
-def fetch_s2_image(
-    lon: float, lat: float, size_m: float, start: str, end: str,
-    stac_url: str = EARTH_SEARCH_URL, max_cloud: float = 60.0
-) -> tuple[np.ndarray, str]:
-    """Fetches the least cloudy Sentinel-2 NDRE image array (1, H, W) and its acquisition date."""
-    bbox = bbox_around(lon, lat, size_m)
-    q = {"eo:cloud_cover": {"lt": max_cloud}} if max_cloud is not None else {}
-
-    items = search_stac(stac_url, "sentinel-2-l2a", bbox, start, end, q)
-    best = min(items, key=lambda it: (float(it.properties.get("eo:cloud_cover", 100.0)), -item_time(it).timestamp()))
-
-    data, _ = load_stac_raster([best], ["rededge1", "nir08", "scl"], bbox, utm_epsg(lon, lat), 10.0, {"*": "average", "scl": "nearest"})
-
-    b5, b8a, scl = data[0]
-    ok = ~np.isin(scl, BAD_SCL) & (b5 > 0) & (b8a > 0)
-    with np.errstate(invalid="ignore", divide="ignore"):
-        ndre = np.where(ok, (b8a - b5) / (b8a + b5), np.nan).astype("float32")
-
-    return ndre[np.newaxis, :, :], item_date(best)
 
 
 def fetch_s2_ndre_timeseries(

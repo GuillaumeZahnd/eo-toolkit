@@ -16,7 +16,7 @@ from .stac import (
 # Sentinel-2 Scene Classification Layer (SCL) invalid/cloud mask values:
 # 0: No Data, 1: Saturated/Defective, 3: Cloud Shadows, 8: Cloud Medium Probability, 9: Cloud High Probability, 10: Thin Cirrus
 BAD_SCL = [0, 1, 3, 8, 9, 10]
-CELL_S2 = 10  # Default working resolution in meters
+CELL_S2 = 30  # Default working resolution in meters
 
 
 def get_s2_manifest(
