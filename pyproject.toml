@@ -18,6 +18,7 @@ dependencies = [
     "matplotlib>=3.11.2",
     "numpy>=2.5.4",
     "odc-stac>=0.5.3",
+    "owslib>=0.36.0",
     "pandas>=3.1.0",
     "planetary-computer>=1.0.0",
     "pymannkendall>=1.4.3",
