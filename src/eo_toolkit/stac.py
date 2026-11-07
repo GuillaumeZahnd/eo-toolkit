@@ -15,6 +15,8 @@ PLANETARY_COMPUTER_URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
 Bbox = tuple[float, float, float, float]
 _EPOCH = datetime.min.replace(tzinfo=timezone.utc)
 
+CELL = 30  # Working spatial resolution in meters
+
 S2_BANDS = [
     "coastal",    # B1: Coastal Aerosol, 60 m/px, 443 nm, Atmospheric correction
     "blue",       # B2: Blue, 10 m/px, 490 nm, Forest type mapping
@@ -116,7 +118,7 @@ def search_stac(
 def load_stac_raster(
     items: Sequence[Item],
     bands: Sequence[str],
-    bbox: tuple[float, float, float, float],
+    bbox: list[float],
     crs: str,
     resolution: float,
     resampling: str,
@@ -130,7 +132,7 @@ def load_stac_raster(
         A sequence of PySTAC Item objects (pre-filtered to guarantee the presence of the requested bands).
     bands : Sequence[str]
         The band names to load (e.g., ``("vv", "vh")``).
-    bbox : tuple[float, float, float, float]
+    bbox : list[float]
         Spatial bounding box coordinates ``(xmin, ymin, xmax, ymax)`` in the target CRS.
     crs : str
         Target Coordinate Reference System string (e.g., a UTM EPSG string like ``"EPSG:32632"``).
@@ -146,6 +148,9 @@ def load_stac_raster(
         - data: A float32 NumPy array stacked across the requested bands.
         - dates: A list of ISO date strings representing each temporal slice.
     """
+    xmin, ymin, xmax, ymax = bbox
+    bbox_tuple: tuple[float, float, float, float] = (xmin, ymin, xmax, ymax)
+    
     # Load and compute spatial/temporal subset via odc.stac
     ds = odc.stac.load(
         list(items),

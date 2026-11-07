@@ -20,9 +20,7 @@ CELL_S2 = 30  # Default working resolution in meters
 
 
 def get_s2_manifest(
-    lon: float,
-    lat: float,
-    size_m: float,
+    bbox: list[float],
     start: str,
     end: str,
     max_cloud: float = 60.0,
@@ -31,7 +29,6 @@ def get_s2_manifest(
     """Queries the STAC catalog once and returns a clean manifest of available
     Sentinel-2 acquisitions filtered by spatial bounding box and cloud cover.
     """
-    bbox = bbox_around(lon, lat, size_m)
     q = {}
     if max_cloud is not None:
         q["eo:cloud_cover"] = {"lt": max_cloud}
@@ -56,9 +53,7 @@ def get_s2_manifest(
 
 def fetch_s2_image(
     item: Item,
-    lon: float,
-    lat: float,
-    size_m: float,
+    bbox: list[float],
     bands: tuple[str, ...],
     resolution: float = CELL_S2,
 ) -> tuple[npt.NDArray[np.float32], list[str], str]:
@@ -69,12 +64,12 @@ def fetch_s2_image(
     ----------
     item : pystac.Item
         The pre-selected Sentinel-2 STAC item to load.
-    lon, lat, size_m : float
-        Spatial definition of the ROI.
+    bbox : list[float]
+        Bounding box of the area in format [xmin, ymin, xmax, ymax] (WGS84).
     bands : tuple[str, ...]
         Any arbitrary tuple of Sentinel-2 asset names to load.
     resolution : float
-        Output spatial resolution in meters (default is 10.0).
+        Output spatial resolution in meters (default is 30.0).
 
     Returns
     -------
@@ -83,7 +78,11 @@ def fetch_s2_image(
         - List of corresponding band name strings.
         - The exact acquisition date string ``'YYYY-MM-DD'``.
     """
-    bbox = bbox_around(lon, lat, size_m)
+    xmin, ymin, xmax, ymax = bbox
+    # Center point calculation for UTM zone determination
+    lon = (xmin + xmax) / 2.0
+    lat = (ymin + ymax) / 2.0
+    
     exact_date = item_date(item)
 
     # Always request the Scene Classification Layer (scl) alongside bands for masking

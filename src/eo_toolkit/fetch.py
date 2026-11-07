@@ -19,9 +19,6 @@ from .stac import (
 )
 
 
-CELL = 30  # Working spatial resolution in meters
-
-
 def grid_of(lon: float, lat: float, size_m: float) -> tuple[int, int, tuple[int, int]]:
     """Calculates the (ix, iy, shape) grid alignment for 30m cell tables."""
     gb = GeoBox.from_geopolygon(
