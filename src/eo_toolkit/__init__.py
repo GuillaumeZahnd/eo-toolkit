@@ -1,8 +1,16 @@
-from .fetch_s2 import (
+from .retrieve_sentinel1_data import (
+    get_s1_manifest,
+    filter_manifest_by_bands,
+    filter_manifest_by_orbit_numbers,
+    download_sentinel1_patches,
+)
+
+from .retrieve_sentinel2_data import (
     get_s2_manifest,
     fetch_s2_image,
     select_least_cloudy_manifest_item,
     compute_ndre_from_patch,
+    download_sentinel2_patches,
 )
 
 from .stac import (
@@ -41,24 +49,18 @@ from .utils import (
     slice_tensor_with_time_interval,
 )
 
-from .retrieve_sentinel1_data import (
-    get_s1_manifest,
-    filter_manifest_by_bands,
-    filter_manifest_by_orbit_numbers, 
-    download_sentinel1_patches,       
-)
-
 __all__ = [
     # retrieve_sentinel1_data
-    "get_s1_manifest",    
+    "get_s1_manifest",
     "filter_manifest_by_bands",
     "filter_manifest_by_orbit_numbers",
     "download_sentinel1_patches",
-    # fetch_s2
+    # retrieve_sentinel2_data
     "get_s2_manifest",
     "fetch_s2_image",
     "select_least_cloudy_manifest_item",
     "compute_ndre_from_patch",
+    "download_sentinel2_patches",
     # stac
     "PLANETARY_COMPUTER_URL",
     "NoSceneFoundError",

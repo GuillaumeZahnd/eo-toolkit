@@ -31,14 +31,11 @@ def main(cfg: DictConfig) -> None:
 
     required_bands = ("vv", "vh")
 
-    # Unpack bounding box and calculate center coordinates
+    # Build the unique identifier string
+    data_nickname = "darney"
     xmin, ymin, xmax, ymax = bbox
     center_x = (xmin + xmax) / 2.0
     center_y = (ymin + ymax) / 2.0
-
-    data_nickname = "darney"
-
-    # Build the unique identifier string
     unique_id = f"{data_nickname}_{start_date}_{end_date}_{center_x:.4f}_{center_y:.4f}"
 
     # Fetch the complete raw manifest using the bounding box and full date range
