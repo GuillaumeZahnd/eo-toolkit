@@ -14,7 +14,7 @@ def main(cfg: DictConfig) -> None:
 
     # Load GeoJSON data
     path_to_geojson = Path(cfg.get("path_to_geojson", "./geojson"))
-    region_name = "darney_1_region.geojson"
+    region_name = "lisle_healthy_control.geojson"  # "darney_1_region", "lisle_healthy_control.geojson"
     path_to_geojson_file = path_to_geojson / region_name
     gdf = gpd.read_file(path_to_geojson_file)
 
@@ -44,7 +44,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Build the unique identifier string
-    data_nickname = "darney"
+    data_nickname = "lisle"  # "darney", "lisle"
     xmin, ymin, xmax, ymax = bbox
     center_x = (xmin + xmax) / 2.0
     center_y = (ymin + ymax) / 2.0
