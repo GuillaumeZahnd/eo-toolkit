@@ -4,6 +4,17 @@ from scipy.interpolate import interp1d
 from numpy.typing import NDArray
 
 
+def bbox_around(lon: float, lat: float, size_m: float) -> tuple[float, float, float, float]:
+    """Calculates a lon/lat bounding box of `size_m` metres centered on a point."""
+    if size_m <= 0:
+        raise ValueError(f"size_m must be positive, got {size_m}.")
+    if not -90.0 < lat < 90.0:
+        raise ValueError(f"lat must be strictly between -90 and 90, got {lat}.")
+    dlat = size_m / 111_320 / 2
+    dlon = size_m / (111_320 * math.cos(math.radians(lat))) / 2
+    return (lon - dlon, lat - dlat, lon + dlon, lat + dlat)
+    
+
 def interpolate_tensor_to_regular_grid(
     data_tensor: NDArray[np.float32],
     dates: NDArray[np.datetime64],
