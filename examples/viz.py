@@ -60,9 +60,9 @@ def plot_pixelwise_harmonic_fit_with_residuals(
         ax_res.plot(dates, ewma_res, color="darkblue", linewidth=2, label=f"EWMA (span={ewma_span})" if idx == 0 else "")
         
         # Compute residual percentiles for reference
-        p50 = np.percentile(res, 50)
-        p95 = np.percentile(res, 95)
-        p99 = np.percentile(res, 99)
+        p50 = np.nanpercentile(res, 50)
+        p95 = np.nanpercentile(res, 95)
+        p99 = np.nanpercentile(res, 99)
         
         # Plot percentile reference lines
         ax_res.axhline(p50, color="forestgreen", linestyle=":", linewidth=1, label="median" if idx == 0 else "")
@@ -105,9 +105,9 @@ def plot_bootstrap_cusum_envelope(
         
         pixel_paths = bootstrap_cusums[:, :, band_idx, h, w]
         
-        p50 = np.percentile(pixel_paths, 50, axis=0)
-        p95 = np.percentile(pixel_paths, 95, axis=0)
-        p99 = np.percentile(pixel_paths, 99, axis=0)
+        p50 = np.nanpercentile(pixel_paths, 50, axis=0)
+        p95 = np.nanpercentile(pixel_paths, 95, axis=0)
+        p99 = np.nanpercentile(pixel_paths, 99, axis=0)
         
         ax.fill_between(dates, p50, p99, color="skyblue", alpha=0.2, label="50% - 99% Noise Envelope")
         ax.fill_between(dates, p50, p95, color="dodgerblue", alpha=0.3, label="50% - 95% Noise Envelope")

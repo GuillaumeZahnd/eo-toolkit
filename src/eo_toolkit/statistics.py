@@ -32,7 +32,10 @@ def compute_one_sided_cusum(
     for t in range(n_time):
         # Accumulate positive deviations, pulling back by the slack factor,
         # and clamping at 0 to prevent negative accumulation.
-        current_cusum = np.maximum(0.0, current_cusum + residuals[t] - slack)
+        res_t = residuals[t]
+        res_t_clean = np.nan_to_num(res_t, nan=0.0)
+
+        current_cusum = np.maximum(0.0, current_cusum + res_t_clean - slack)
         cusum_tensor[t] = current_cusum
 
     return cusum_tensor
