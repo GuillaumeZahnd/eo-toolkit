@@ -105,14 +105,14 @@ def get_s2_manifest(
     bbox: list[float],
     start: str,
     end: str,
+    required_bands: tuple[str, ...],
     path_to_logs: Union[str, Path],
     unique_id: str,
     stac_url: str = EARTH_SEARCH_URL,
 ) -> List[Dict[str, Any]]:
     """Queries the STAC catalog once and returns a clean manifest of all available
-
-    Sentinel-2 acquisitions within the given spatial bounding box and date range, and
-    writes a manifest audit log to a text file.
+    Sentinel-2 acquisitions within the given spatial bounding box and date range that
+    contain all required bands, and writes a manifest audit log to a text file.
     """
     try:
         items = search_stac(stac_url, "sentinel-2-l2a", bbox, start, end, {})
@@ -122,7 +122,10 @@ def get_s2_manifest(
     # Sort items chronologically
     items = sorted(items, key=item_time)
 
-    # List comprehension
+    # Define the full list of bands that must be present in item.assets
+    target_bands = set(list(required_bands) + ["scl"])
+
+    # Filter items during manifest creation
     manifest = [
         {
             "date": item_date(item),
@@ -132,6 +135,7 @@ def get_s2_manifest(
             "_item_obj": item,
         }
         for item in items
+        if target_bands.issubset(item.assets.keys())
     ]
 
     # Write log file
@@ -139,7 +143,7 @@ def get_s2_manifest(
     path_to_log_file.parent.mkdir(parents=True, exist_ok=True)
 
     log_lines = [
-        f"Sentinel-2 Manifest Audit Report (Total passes: {len(manifest)})\n",
+        f"Sentinel-2 Manifest Audit Report (Total valid passes: {len(manifest)})\n",
         "-" * 65 + "\n"
     ]
     for entry in manifest:

@@ -1,4 +1,4 @@
-Sentinel-2 Manifest Audit Report (Total passes: 1906)
+Sentinel-2 Manifest Audit Report (Total valid passes: 1907)
 -----------------------------------------------------------------
 Date: 2016-11-01 | Cloud Cover: 49.88% | ID: S2A_31UGP_20161101_0_L2A
 Date: 2016-11-04 | Cloud Cover: 83.61% | ID: S2A_31UGP_20161104_0_L2A
@@ -1906,3 +1906,4 @@ Date: 2026-11-01 | Cloud Cover: 11.71% | ID: S2A_31UGP_20261101_0_L2A
 Date: 2026-11-02 | Cloud Cover: 76.50% | ID: S2C_31UGP_20261102_0_L2A
 Date: 2026-11-04 | Cloud Cover: 78.76% | ID: S2B_31UGP_20261104_0_L2A
 Date: 2026-11-04 | Cloud Cover: 79.53% | ID: S2A_31UGP_20261104_1_L2A
+Date: 2026-11-07 | Cloud Cover: 95.54% | ID: S2B_31UGP_20261107_0_L2A
