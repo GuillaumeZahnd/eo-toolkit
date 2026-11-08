@@ -4,6 +4,14 @@ from scipy.interpolate import interp1d
 from numpy.typing import NDArray
 
 
+def _to_naive_timestamp(value) -> pd.Timestamp:
+    """Parse a stored date and drop any timezone (converted to UTC first), so datetime64[ns] is safe."""
+    ts = pd.to_datetime(str(value))
+    if ts.tzinfo is not None:
+        ts = ts.tz_convert("UTC").tz_localize(None)
+    return ts
+
+
 def bbox_around(lon: float, lat: float, size_m: float) -> tuple[float, float, float, float]:
     """Calculates a lon/lat bounding box of `size_m` metres centered on a point."""
     if size_m <= 0:
