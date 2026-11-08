@@ -21,6 +21,7 @@ from .stac import (
 def fetch_s1_image(
     item: Item,
     bbox: list[float],
+    required_bands: tuple[str, ...],
     resolution: float = CELL,
     to_db: bool = True,
 ) -> tuple[np.ndarray, str]:
@@ -32,6 +33,8 @@ def fetch_s1_image(
         The pre-selected Sentinel-1 STAC item to load.
     bbox : list[float]
         Bounding box of the area in format [xmin, ymin, xmax, ymax] (WGS84).
+    required_bands (tuple[str, ...]): A tuple of string identifiers representing the
+        mandatory bands that each item asset must possess.
     to_db : bool, optional
         If True, converts linear power backscatter to decibels (10 * log10(x)).
         Default is True.
@@ -52,7 +55,7 @@ def fetch_s1_image(
 
     exact_date = item_date(item)
 
-    data, _ = load_stac_raster([item], ("vv", "vh"), bbox, utm_epsg(lon, lat), resolution, "nearest")
+    data, _ = load_stac_raster([item], required_bands, bbox, utm_epsg(lon, lat), resolution, "nearest")
     arr = data[0]
 
     # Mask invalid/non-finite values
@@ -67,6 +70,7 @@ def download_sentinel1_patches(
     manifest: List[Dict[str, Any]],
     bbox: List[float],
     unique_id: str,
+    required_bands: tuple[str, ...],
     path_to_data: Union[str, Path],
 ) -> None:
     """Downloads Sentinel-1 rectangular raster patches for a specified bounding box
@@ -80,6 +84,8 @@ def download_sentinel1_patches(
             the appropriate coordinate reference system.
         unique_id (str): A unique identifier suffix used to name the output directory
             (e.g., `sentinel1_patches_{unique_id}`).
+        required_bands (tuple[str, ...]): A tuple of string identifiers representing the
+            mandatory bands that each item asset must possess.
         path_to_data (Union[str, Path]): The root directory path where the patch collection
             directory will be created and saved.
 
@@ -99,11 +105,12 @@ def download_sentinel1_patches(
         item_obj = entry["_item_obj"]
         best_orbit = entry.get("relative_orbit")
 
-        arr, exact_date = fetch_s1_image(item_obj, bbox)
+        arr, exact_date = fetch_s1_image(item_obj, bbox, required_bands)
 
         np.savez_compressed(
             file_path,
             data=arr,
+            band_names=np.array(required_bands, dtype=str),
             orbit_number=np.array([best_orbit] if best_orbit is not None else [-1]),
             date=np.array([exact_date], dtype=str)
         )

@@ -59,7 +59,7 @@ def main(cfg: DictConfig) -> None:
     # Filter the manifest by orbital
     manifest_filtered_by_orbit_number = filter_manifest_by_orbit_numbers(
         manifest_filtered_by_bands=manifest_filtered_by_bands,
-        target_orbits=139  # <-- (please inspect the logs firts to decide which orbits to select)
+        target_orbits=37  # <-- (please inspect the logs firts to decide which orbits to select)
     )
     print(f"Filtered manifest contains {len(manifest_filtered_by_orbit_number)} observations.")
 
@@ -67,6 +67,7 @@ def main(cfg: DictConfig) -> None:
     download_sentinel1_patches(
         manifest=manifest_filtered_by_orbit_number,
         unique_id=unique_id,
+        required_bands=required_bands,
         bbox=bbox,
         path_to_data=path_to_data,
     )
