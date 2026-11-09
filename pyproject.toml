@@ -30,6 +30,7 @@ dependencies = [
     "python-dotenv>=1.2.4",
     "rasterio>=1.5.2",
     "rioxarray>=0.23.0",
+    "scikit-learn>=1.9.1",
     "shapely>=2.2.0",
     "torch>=2.15.0",
     "tqdm>=4.70.1",
